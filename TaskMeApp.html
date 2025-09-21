@@ -1,802 +1,1182 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" >
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>TaskMe - Todo App with Year, Month, Date Filtering</title>
-<style>
-body {
-  font-family: Arial, sans-serif;
-  margin: 0; padding: 0;
-  background: #fcfcfe;
-  display: flex;
-  height: 100vh;
-  overflow: hidden;
-}
-#sidebar {
-  width: 280px;
-  border-right: 2px solid #a5b4fc;
-  padding: 15px;
-  background: #fefefe;
-  overflow-y: auto;
-}
-#sidebar h2 {
-  color: #6B7280;
-  font-weight: 700;
-  margin-bottom: 20px;
-}
-#sidebar .input-group {
-  margin-bottom: 16px;
-}
-#sidebar input[type="date"],
-#sidebar select {
-  padding: 10px;
-  font-size: 16px;
-  border-radius: 8px;
-  border: 1px solid #d1d5db;
-  background: #f9fafb;
-  width: 100%;
-  box-sizing: border-box;
-  transition: background 0.3s ease;
-}
-#sidebar input[type="date"]:focus,
-#sidebar select:focus {
-  background: #fff;
-  outline: none;
-  border-color: #a5b4fc;
-}
-#sidebar label.all-dates {
-  font-weight: 600;
-  user-select: none;
-  cursor: pointer;
-  color: #4b5563;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-#sidebar button.clear {
-  background-color: #fca5a5;
-  color: #7f1d1d;
-  border: none;
-  padding: 10px;
-  border-radius: 8px;
-  cursor: pointer;
-  width: 100%;
-  transition: background-color 0.3s ease;
-}
-#sidebar button.clear:hover {
-  background-color: #f87171;
-}
-.year-group, .month-group, .date-group {
-  margin-bottom: 10px;
-}
-.year-title, .month-title, .date-title {
-  cursor: pointer;
-  user-select: none;
-  border-radius: 4px;
-  padding: 6px 8px;
-  transition: background-color 0.3s ease;
-}
-.year-title {
-  font-weight: 700;
-  margin-bottom: 8px;
-  background-color: #e0e7ff;
-  color: #6b7280;
-}
-.year-title:hover {
-  background-color: #a5b4fcaa;
-  color: white;
-}
-.month-title {
-  font-weight: 600;
-  margin-bottom: 6px;
-  background-color: #f3f4f6;
-  color: #4b5563;
-  margin-left: 16px;
-}
-.month-title:hover {
-  background-color: #c7d2fe;
-  color: #1e3a8a;
-}
-.date-title {
-  font-weight: 500;
-  margin-bottom: 4px;
-  background-color: #f9fafb;
-  color: #374151;
-  margin-left: 32px;
-}
-.date-title:hover {
-  background-color: #dbeafe;
-  color: #1e3a8a;
-}
-.sidebar-tasks-container {
-  display: none;
-  margin-left: 40px;
-  max-height: 280px;
-  overflow-y: auto;
-  border-left: 2px solid #a5b4fc55;
-  padding-left: 8px;
-}
-.sidebar-task {
-  padding: 6px 8px;
-  margin-bottom: 6px;
-  background-color: #f3f4f6;
-  font-size: 14px;
-  border-radius: 6px;
-  user-select: none;
-}
-.sidebar-task.completed {
-  opacity: 0.7;
-  text-decoration: line-through;
-}
-.selected {
-  background-color: #a5b4fc !important;
-  color: white !important;
-}
-/* Main area */
-#mainContent {
-  flex-grow: 1;
-  max-width: 900px;
-  margin: 0 auto;
-  overflow-y: auto;
-  padding: 20px;
-}
-h1, h2 {
-  text-align: center;
-  color: #6b7280;
-}
-.input-group {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  justify-content: center;
-  margin-bottom: 20px;
-}
-input[type="text"], select, input[type="date"] {
-  padding: 10px;
-  font-size: 16px;
-  min-width: 150px;
-  border-radius: 8px;
-  border: 1px solid #d1d5db;
-  background: #f9fafb;
-  transition: background 0.3s ease;
-}
-input[type="text"]:focus, select:focus, input[type="date"]:focus {
-  background: #fff;
-  outline: none;
-  border-color: #a5b4fc;
-}
-button {
-  background-color: #a5b4fc;
-  color: #1e3a8a;
-  font-weight: 600;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-}
-button:hover {
-  background-color: #818cf8;
-}
-.category-section {
-  margin-bottom: 30px;
-}
-.category-title {
-  font-size: 20px;
-  font-weight: 700;
-  margin-bottom: 10px;
-}
-.category-workout {color: #ff9090;}
-.category-personal {color: #fff3a0;}
-.category-professional {color: #90ffd0;}
-.category-finance {color: #ffcc99;}
-.subtasks {
-  margin-left: 25px;
-  margin-top: 10px;
-}
-.subtask {
-  margin-bottom: 5px;
-}
-.dash-container {
-  margin-top: 40px;
-  border: 2px solid #a5b4fc;
-  padding: 20px;
-  border-radius: 12px;
-  background: #f3f4f6;
-}
-.progress-bar {
-  width: 100%;
-  height: 14px;
-  border-radius: 12px;
-  background: #e5e7eb;
-  margin-top: 6px;
-  overflow: hidden;
-}
-.progress-fill {
-  height: 100%;
-  background-color: #a5b4fc;
-  width: 0;
-  border-radius: 12px 0 0 12px;
-  transition: width 0.3s ease;
-}
-.dashboard-items {
-  display: flex;
-  gap: 24px;
-  justify-content: space-around;
-  flex-wrap: wrap;
-}
-.dashboard-item {
-  min-width: 150px;
-  color: #374151;
-  text-align: center;
-}
-.filter-indicator {
-  text-align: center;
-  color: #6b7280;
-  font-style: italic;
-  margin-bottom: 15px;
-  font-size: 14px;
-}
-@media (max-width: 600px) {
-  body {flex-direction: column; height: auto;}
-  #sidebar {
-    width: 100%;
-    border-right: none;
-    border-bottom: 2px solid #a5b4fc;
-  }
-  #mainContent {
-    max-width: 100%;
-    height: auto;
-  }
-  .input-group {
-    flex-direction: column;
-    align-items: stretch;
-  }
-}
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>TaskMe - Todo App Fully Fixed</title>
+  <style>
+    /* Full, polished CSS including dashboard, task input, and buttons */
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0; padding: 0;
+      background: #1e2230;
+      color: #e5e6f0;
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+      flex-direction: row;
+    }
+    #sidebar {
+      width: 280px;
+      height: 100vh;           /* Ensure full viewport height */
+      overflow-y: auto;        /* Scroll if content overflows */
+      box-sizing: border-box;
+      background: #23263a;
+      padding: 15px;
+      border-right: 2px solid #3e5c98;
+      display: block;          /* Ensure block display */
+      flex-shrink: 0;
+    }
+    #sidebar h2 {
+      color: #a6b7f2;
+      font-weight: 700;
+      margin-bottom: 20px;
+    }
+    #sidebar .input-group {
+      margin-bottom: 16px;
+    }
+    #sidebar input[type="date"],
+    #sidebar select {
+      padding: 10px;
+      font-size: 16px;
+      border-radius: 8px;
+      border: 1px solid #434a63;
+      background: #1e2230;
+      color: #e5e6f0;
+      width: 100%;
+      box-sizing: border-box;
+      transition: background 0.3s ease;
+      display: block;
+    }
+    #sidebar input[type="date"]:focus,
+    #sidebar select:focus {
+      background: #23263a;
+      outline: none;
+      border-color: #6c8fff;
+    }
+    #sidebar label.all-dates {
+      font-weight: 600;
+      user-select: none;
+      cursor: pointer;
+      color: #a3a3c2;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    #sidebar button.clear {
+      background-color: #eb7070;
+      color: #fff0f0;
+      border: none;
+      padding: 10px;
+      border-radius: 8px;
+      cursor: pointer;
+      width: 100%;
+      transition: background-color 0.3s ease;
+    }
+    #sidebar button.clear:hover {
+      background-color: #ff9d9d;
+    }
+    .year-group, .month-group, .date-group {
+      margin-bottom: 10px;
+    }
+    .year-title, .month-title, .date-title {
+      cursor: pointer;
+      user-select: none;
+      border-radius: 4px;
+      padding: 6px 8px;
+      transition: background-color 0.3s ease, color 0.3s;
+    }
+    .year-title {
+      font-weight: 700;
+      margin-bottom: 8px;
+      background-color: #222b43;
+      color: #6c8fff;
+    }
+    .year-title:hover {
+      background-color: #3851a7;
+      color: #fff;
+    }
+    .month-title {
+      font-weight: 600;
+      margin-bottom: 6px;
+      background-color: #27305a;
+      color: #87abdc;
+      margin-left: 16px;
+    }
+    .month-title:hover {
+      background-color: #334175;
+      color: #fff;
+    }
+    .date-title {
+      font-weight: 500;
+      margin-bottom: 4px;
+      background-color: #1e2230;
+      color: #b8bee4;
+      margin-left: 32px;
+    }
+    .date-title:hover {
+      background-color: #384872;
+      color: #fff;
+    }
+    .sidebar-tasks-container {
+      display: none;
+      margin-left: 40px;
+      max-height: 280px;
+      overflow-y: auto;
+      border-left: 2px solid #3e5c98;
+      padding-left: 8px;
+    }
+    .sidebar-task {
+      padding: 6px 8px;
+      margin-bottom: 6px;
+      background-color: #212643;
+      font-size: 14px;
+      border-radius: 6px;
+      user-select: none;
+      color: #aab1db;
+    }
+    .sidebar-task.completed {
+      opacity: 0.6;
+      text-decoration: line-through;
+    }
+    .selected {
+      background-color: #394fa9 !important;
+      color: #fff !important;
+    }
+    #mainContent {
+      flex-grow: 1;
+      max-width: 900px;
+      margin: 0 auto;
+      overflow-y: auto;
+      padding: 20px;
+      background: #181a25;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+    h1, h2 {
+      text-align: center;
+      color: #6c8fff;
+    }
+
+    /* Task Creation Input Group */
+    .input-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+      margin-bottom: 20px;
+      max-width: 700px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .input-group input[type="text"],
+    .input-group select,
+    .input-group input[type="date"],
+    .input-group textarea {
+      padding: 10px;
+      font-size: 16px;
+      border-radius: 8px;
+      border: 1px solid #434a63;
+      background: #22263a;
+      color: #e5e6f0;
+      transition: background 0.3s ease;
+    }
+    .input-group input[type="text"]:focus,
+    .input-group select:focus,
+    .input-group input[type="date"]:focus,
+    .input-group textarea:focus {
+      background: #283059;
+      outline: none;
+      border-color: #6c8fff;
+    }
+    .input-group textarea {
+      resize: vertical;
+      min-height: 50px;
+      min-width: 220px;
+      flex-grow: 1;
+    }
+    .add-task-button {
+      background-color: #6c8fff;
+      color: #181a25;
+      font-weight: 600;
+      border: none;
+      padding: 10px 24px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+      align-self: center;
+      min-width: 120px;
+    }
+    .add-task-button:hover {
+      background-color: #3851a7;
+      color: #fff;
+    }
+
+    /* Task Card */
+    .task-card {
+      background-color: #22263a;
+      padding: 12px 16px;
+      border-radius: 10px;
+      margin-bottom: 24px;
+      box-shadow: 0 0 10px #4a5599aa;
+      transition: box-shadow 0.3s ease;
+    }
+    .task-card:hover {
+      box-shadow: 0 0 14px #6c8fffdd;
+    }
+
+    /* Task Header for checkbox, title and buttons */
+    .task-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 6px;
+      gap: 12px;
+    }
+    .task-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex: 1;
+      min-width: 0;
+    }
+    .task-title-span {
+      font-weight: bold;
+      font-size: 18px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      cursor: pointer;
+      user-select: none;
+    }
+    .task-title-span.completed {
+      text-decoration: line-through;
+      opacity: 0.7;
+    }
+    .task-controls {
+      display: flex;
+      gap: 14px;
+      align-items: center;
+      flex-shrink: 0;
+    }
+
+    /* Fixed bigger edit and delete icon buttons */
+    .edit-btn, .task-delete-btn, .subtask-delete-btn {
+      font-size: 36px;           /* Larger font size for icon */
+      width: 42px;               /* Fixed width */
+      height: 42px;              /* Fixed height */
+      padding: 6px 0;
+      cursor: pointer;
+      background: none;
+      border: none;
+      user-select: none;
+      transition: color 0.25s ease, transform 0.25s ease;
+      line-height: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 10px;        /* Rounded corners for button */
+    }
+    .edit-btn:hover, .task-delete-btn:hover, .subtask-delete-btn:hover {
+      color: #ff2727;
+      transform: scale(1.25);
+    }
+
+    /* Subtasks */
+    .subtasks {
+      margin-left: 36px;
+      margin-top: 10px;
+      border-left: 2px solid #394fa9;
+      padding-left: 12px;
+    }
+    .subtask {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+      user-select: none;
+      gap: 12px;
+    }
+    .subtask-title-container {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      flex-grow: 1;
+      min-width: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .subtask-title-container span {
+      display: block;
+      flex-shrink: 1;
+      user-select: text;
+    }
+    .subtask-title-container span.completed {
+      text-decoration: line-through;
+      opacity: 0.6;
+    }
+    .subtask-delete-btn {
+      font-size: 28px;
+      width: 36px;
+      height: 36px;
+      flex-shrink: 0;
+    }
+    /* Add subtask input container */
+    .add-subtask-container {
+      margin-top: 12px;
+      display: flex;
+      gap: 10px;
+    }
+    .add-subtask-container input[type="text"] {
+      flex-grow: 1;
+      border-radius: 8px;
+      padding: 8px 12px;
+      font-size: 14px;
+      border: 1px solid #434a63;
+      background: #22263a;
+      color: #e5e6f0;
+      transition: background 0.3s ease;
+    }
+    .add-subtask-container input[type="text"]:focus {
+      outline: none;
+      background: #283059;
+      border-color: #6c8fff;
+    }
+    .add-subtask-container button {
+      background-color: #6c8fff;
+      color: #181a25;
+      border: none;
+      border-radius: 8px;
+      padding: 8px 16px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+      font-weight: 600;
+      font-size: 14px;
+    }
+    .add-subtask-container button:hover {
+      background-color: #3851a7;
+      color: #fff;
+    }
+
+    /* Edit inputs */
+    .edit-input, .edit-textarea, .edit-date {
+      background: #283059;
+      border: 1px solid #6c8fff;
+      color: #e5e6f0;
+      border-radius: 6px;
+      font-size: 16px;
+      padding: 6px 10px;
+      width: 100%;
+      box-sizing: border-box;
+      margin-bottom: 8px;
+      resize: vertical;
+    }
+    .edit-textarea {
+      min-height: 70px;
+      max-height: 160px;
+    }
+
+    /* Edit buttons container */
+    .edit-buttons-container {
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+    .edit-buttons-container button {
+      font-size: 14px;
+      padding: 6px 18px;
+      border-radius: 8px;
+    }
+
+    /* Dashboard container styles */
+    .dash-container {
+      margin-top: auto;
+      background: #23263a;
+      border-radius: 14px;
+      padding: 24px;
+      border: 2px solid #394fa9;
+      box-shadow: 0 0 15px #6c8fffaa;
+      max-width: 900px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .dashboard-items {
+      display: flex;
+      gap: 24px;
+      justify-content: space-around;
+      flex-wrap: wrap;
+    }
+    .dashboard-item {
+      min-width: 150px;
+      color: #b5bde6;
+      text-align: center;
+      user-select: none;
+    }
+    .dashboard-item div:first-child {
+      font-weight: bold;
+      font-size: 22px;
+      margin-bottom: 8px;
+    }
+    .progress-bar {
+      width: 100%;
+      height: 16px;
+      border-radius: 12px;
+      background: #2a3047;
+      margin-top: 6px;
+      overflow: hidden;
+      box-shadow: inset 0 0 6px rgb(150 160 250 / 0.6);
+    }
+    .progress-fill {
+      height: 100%;
+      background-color: #6c8fff;
+      width: 0;
+      border-radius: 12px 0 0 12px;
+      transition: width 0.3s ease;
+    }
+    .filter-indicator {
+      text-align: center;
+      color: #aab7db;
+      font-style: italic;
+      margin-bottom: 15px;
+      font-size: 14px;
+      user-select: none;
+    }
+
+    /* Modal styles */
+    #taskModal {
+      display: none;
+      position: fixed;
+      z-index: 9999;
+      left: 0; top: 0;
+      width: 100%; height: 100%;
+      overflow: auto;
+      background-color: rgba(0,0,0,0.6);
+      backdrop-filter: blur(2px);
+    }
+    #taskModalContent {
+      background-color: #23263a;
+      margin: 10% auto;
+      padding: 24px;
+      border-radius: 10px;
+      max-width: 520px;
+      color: #c2cdfa;
+      box-shadow: 0 0 10px #6c8fffaa;
+      position: relative;
+    }
+    #taskModalClose {
+      position: absolute;
+      top: 10px; right: 10px;
+      color: #eb7070;
+      cursor: pointer;
+      font-size: 28px;
+      font-weight: bold;
+      user-select: none;
+    }
+    #taskModalClose:hover {
+      color: #ff2727;
+    }
+
+    /* Responsive adjustments */
+    @media(max-width: 800px) {
+      body {
+        flex-direction: column;
+      }
+      #sidebar {
+        width: 100%;
+        border-right: none;
+        border-bottom: 2px solid #3e5c98;
+        height: auto;
+        max-height: none;
+        overflow-y: visible;
+      }
+      #mainContent {
+        max-width: 100%;
+        height: auto;
+        padding: 10px 16px 30px;
+      }
+      .dash-container {
+        max-width: 100%;
+      }
+      .input-group {
+        flex-direction: column;
+        align-items: stretch;
+      }
+    }
+  </style>
 </head>
 <body>
-
-<div id="sidebar">
-  <h2>Filters</h2>
-  <div class="input-group">
-    <input type="date" id="filterDate" />
-    <label class="all-dates"><input type="checkbox" id="filterAllDates" /> Show All Dates</label>
-  </div>
-  <div class="input-group">
-    <select id="filterCategory">
-      <option value="">All Categories</option>
-      <option value="workout">Workout</option>
-      <option value="personal">Personal</option>
-      <option value="professional">Professional</option>
-      <option value="finance">Finance</option>
-    </select>
-  </div>
-  <div class="input-group">
-    <select id="filterStatus">
-      <option value="">All Statuses</option>
-      <option value="pending">Pending</option>
-      <option value="completed">Completed</option>
-    </select>
-  </div>
-  <div class="input-group">
-    <button class="clear" onclick="clearFilters()">Clear Filters</button>
-  </div>
-
-  <h2>Tasks by Date</h2>
-  <div id="tasksByDate"></div>
-</div>
-
-<div id="mainContent">
-  <h1>TaskMe</h1>
-
-  <div class="input-group">
-    <input type="text" id="taskTitle" placeholder="Task Title" />
-    <select id="taskCategory">
-      <option value="workout">Workout</option>
-      <option value="personal">Personal</option>
-      <option value="professional">Professional</option>
-      <option value="finance">Finance</option>
-    </select>
-    <input type="date" id="taskDate" />
-    <button onclick="addTask()">Add Task</button>
+  <div id="sidebar" role="region" aria-label="Task Filters and Task List">
+    <h2>Filters</h2>
+    <div class="input-group">
+      <input type="date" id="filterDate" aria-label="Filter tasks by date" />
+      <label class="all-dates"><input type="checkbox" id="filterAllDates" aria-checked="true" /> Show All Dates</label>
+    </div>
+    <div class="input-group">
+      <select id="filterCategory" aria-label="Filter tasks by category">
+        <option value="">All Categories</option>
+        <option value="workout">Workout</option>
+        <option value="personal">Personal</option>
+        <option value="professional">Professional</option>
+        <option value="finance">Finance</option>
+      </select>
+    </div>
+    <div class="input-group">
+      <select id="filterStatus" aria-label="Filter tasks by status">
+        <option value="">All Statuses</option>
+        <option value="pending">Pending</option>
+        <option value="completed">Completed</option>
+      </select>
+    </div>
+    <div class="input-group">
+      <button class="clear" onclick="clearFilters()" aria-label="Clear all filters">Clear Filters</button>
+    </div>
+    <h2>Tasks by Date</h2>
+    <div id="tasksByDate" tabindex="0" aria-live="polite"></div>
   </div>
 
-  <div id="tasksGrouped"></div>
+  <main id="mainContent">
+    <h1>TaskMe</h1>
+    <form class="input-group" id="addTaskForm" onsubmit="event.preventDefault(); addTask();" aria-label="Add a new task">
+      <input type="text" id="taskTitle" placeholder="Task Title" required autocomplete="off" aria-required="true" aria-label="Task Title" />
+      <textarea id="taskDescription" placeholder="Optional Description" rows="2" aria-label="Task Description"></textarea>
+      <select id="taskCategory" required aria-required="true" aria-label="Task Category">
+        <option value="workout">Workout</option>
+        <option value="personal">Personal</option>
+        <option value="professional">Professional</option>
+        <option value="finance">Finance</option>
+      </select>
+      <input type="date" id="taskDate" required aria-required="true" aria-label="Task Due Date" />
+      <button type="submit" class="add-task-button" aria-label="Add task">Add Task</button>
+    </form>
 
-  <div class="dash-container">
-    <h2>Progress Dashboard</h2>
-    <div class="filter-indicator" id="filterIndicator"></div>
-    <div class="dashboard-items" id="dashboard"></div>
+    <div id="tasksGrouped" aria-live="polite" aria-relevant="additions removals"></div>
+
+    <section class="dash-container" aria-label="Progress Dashboard">
+      <h2>Progress Dashboard</h2>
+      <div class="filter-indicator" id="filterIndicator" aria-live="polite"></div>
+      <div class="dashboard-items" id="dashboard"></div>
+    </section>
+  </main>
+
+  <!-- Modal for task details -->
+  <div id="taskModal" role="dialog" aria-modal="true" aria-labelledby="modalTaskTitle" aria-describedby="modalTaskDescription" tabindex="-1">
+    <div id="taskModalContent">
+      <button id="taskModalClose" aria-label="Close task details">&times;</button>
+      <h2 id="modalTaskTitle"></h2>
+      <p id="modalTaskDescription"></p>
+    </div>
   </div>
-</div>
 
-<script>
-const categories = {
-  workout: { name: "Workout", colorClass: "category-workout" },
-  personal: { name: "Personal", colorClass: "category-personal" },
-  professional: { name: "Professional", colorClass: "category-professional" },
-  finance: { name: "Finance", colorClass: "category-finance" },
-};
-
-let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
-
-// Current filter state: {year, month (0-11 or null), day (String YYYY-MM-DD or null)}
-let currentFilter = {
-  year: null,
-  month: null,
-  day: null
-};
-
-let expandedYears = new Set();
-let expandedMonths = new Set();
-
-function saveTasks() {
-  localStorage.setItem("tasks", JSON.stringify(tasks));
-}
-
-function addTask() {
-  const titleInput = document.getElementById("taskTitle");
-  const categoryInput = document.getElementById("taskCategory");
-  const dateInput = document.getElementById("taskDate");
-
-  if (!titleInput.value.trim()) {
-    alert("Please enter task title.");
-    return;
-  }
-  if (!dateInput.value) {
-    alert("Please select due date.");
-    return;
-  }
-
-  tasks.push({
-    id: Date.now().toString(),
-    title: titleInput.value.trim(),
-    category: categoryInput.value,
-    dueDate: dateInput.value,
-    status: "pending",
-    subtasks: [],
-  });
-
-  saveTasks();
-
-  titleInput.value = "";
-  dateInput.value = new Date().toISOString().slice(0,10);
-
-  renderAll();
-}
-
-function addSubtask(taskId) {
-  const input = document.getElementById('subtaskInput-' + taskId);
-  const val = input.value.trim();
-  if (!val) return;
-  tasks.forEach(t => {
-    if (t.id === taskId) {
-      t.subtasks.push({id: Date.now().toString(), title: val, status: "pending"});
-    }
-  });
-  saveTasks();
-  input.value = "";
-  renderAll();
-}
-
-function toggleStatus(taskId, subtaskId=null) {
-  tasks.forEach(task => {
-    if (task.id === taskId) {
-      if (subtaskId === null) {
-        task.status = (task.status === "pending") ? "completed" : "pending";
-      } else {
-        task.subtasks.forEach(sub => {
-          if (sub.id === subtaskId) {
-            sub.status = (sub.status === "pending") ? "completed" : "pending";
-          }
-        });
-      }
-    }
-  });
-  saveTasks();
-  renderAll();
-}
-
-function clearFilters() {
-  currentFilter = {year: null, month: null, day: null};
-  expandedYears.clear();
-  expandedMonths.clear();
-
-  const today = new Date().toISOString().slice(0,10);
-  document.getElementById("filterDate").value = today;
-  document.getElementById("filterAllDates").checked = true;
-  document.getElementById("filterDate").disabled = true;
-  document.getElementById("filterCategory").value = "";
-  document.getElementById("filterStatus").value = "";
-
-  renderAll();
-}
-
-function getFilteredTasks() {
-  const categoryFilter = document.getElementById("filterCategory").value;
-  const statusFilter = document.getElementById("filterStatus").value;
-  const showAllDates = document.getElementById("filterAllDates").checked;
-
-  return tasks.filter(t => {
-    // Category filter
-    if (categoryFilter && t.category !== categoryFilter) return false;
-    // Status filter
-    if (statusFilter && t.status !== statusFilter) return false;
-
-    if (showAllDates || (!currentFilter.year && !currentFilter.month && !currentFilter.day)) return true;
-
-    const taskDate = new Date(t.dueDate + 'T00:00:00Z');
-    if (currentFilter.year && taskDate.getUTCFullYear() !== currentFilter.year) return false;
-    if (currentFilter.month !== null && taskDate.getUTCMonth() !== currentFilter.month) return false;
-    if (currentFilter.day && t.dueDate !== currentFilter.day) return false;
-
-    return true;
-  });
-}
-
-function renderTasks() {
-  const container = document.getElementById("tasksGrouped");
-  container.innerHTML = "";
-  const filtered = getFilteredTasks();
-
-  if (filtered.length === 0){
-    container.innerHTML = "<p style='text-align:center;color:#6b7280;'>No tasks match the filters.</p>";
-    return;
-  }
-
-  // Group by category
-  const groupedByCat = {};
-  Object.keys(categories).forEach(k => groupedByCat[k] = []);
-  filtered.forEach(t => groupedByCat[t.category].push(t));
-
-  Object.keys(groupedByCat).forEach(cat => {
-    if (groupedByCat[cat].length === 0) return;
-
-    const sec = document.createElement("div");
-    sec.className = "category-section";
-
-    const title = document.createElement("div");
-    title.className = "category-title " + categories[cat].colorClass;
-    title.textContent = categories[cat].name;
-    sec.appendChild(title);
-
-    groupedByCat[cat].forEach(task => {
-      const taskDiv = document.createElement("div");
-      taskDiv.className = "task-card";
-
-      const decoration = (task.status === "completed") ? "line-through" : "none";
-
-      let subtasksHTML = "";
-      task.subtasks.forEach(sub => {
-        subtasksHTML += `
-          <div class="subtask">
-            <input type="checkbox" ${sub.status === "completed" ? "checked" : ""} onchange="toggleStatus('${task.id}','${sub.id}')" />
-            <span style="text-decoration:${sub.status === "completed" ? "line-through" : "none"}">${sub.title}</span>
-          </div>`;
-      });
-
-      taskDiv.innerHTML = `
-        <div>
-          <input type="checkbox" ${task.status === "completed" ? "checked" : ""} onchange="toggleStatus('${task.id}')" />
-          <span style="font-weight:bold; font-size:18px; text-decoration:${decoration}">${task.title}</span>
-          <small style="margin-left:10px; font-style: italic;">Due: ${task.dueDate}</small>
-        </div>
-        <div class="subtasks">
-          ${subtasksHTML}
-          <div style="margin-top:8px; display:flex; gap:8px;">
-            <input type="text" id="subtaskInput-${task.id}" placeholder="Add subtask"/>
-            <button style="background-color:${getCategoryColor(task.category)}; color:#1e3a8a; border:none; padding:5px 10px; border-radius:6px; cursor:pointer;" onclick="addSubtask('${task.id}')">Add</button>
-          </div>
-        </div>`;
-
-      sec.appendChild(taskDiv);
-    });
-    container.appendChild(sec);
-  });
-}
-
-function getCategoryColor(cat) {
-  switch(cat) {
-    case "workout": return "#FFB3B3";
-    case "personal": return "#FEF3C7";
-    case "professional": return "#CBF0E7";
-    case "finance": return "#FFE4C7";
-    default: return "#ccc";
-  }
-}
-
-function getMonthName(m) {
-  return new Date(2000,m).toLocaleString('default', {month:'long'});
-}
-
-function getFilterPeriodText() {
-  if (currentFilter.day) {
-    return `Daily Progress - ${currentFilter.day}`;
-  } else if (currentFilter.month !== null && currentFilter.year) {
-    return `Monthly Progress - ${getMonthName(currentFilter.month)} ${currentFilter.year}`;
-  } else if (currentFilter.year) {
-    return `Yearly Progress - ${currentFilter.year}`;
-  } else {
-    return "Overall Progress - All Tasks";
-  }
-}
-
-function renderDashboard(){
-  const container = document.getElementById("dashboard");
-  const indicatorContainer = document.getElementById("filterIndicator");
-  
-  container.innerHTML = "";
-  indicatorContainer.textContent = getFilterPeriodText();
-
-  // Use filtered tasks for dashboard calculations
-  const filteredTasks = getFilteredTasks();
-
-  for (const cat in categories) {
-    const catTasks = filteredTasks.filter(t => t.category === cat);
-    const completed = catTasks.filter(t => t.status === "completed").length;
-    const total = catTasks.length;
-    const percent = total ? Math.round(completed/total*100) : 0;
-
-    const div = document.createElement("div");
-    div.className = "dashboard-item";
-    div.innerHTML = `
-    <div style="font-size:20px; font-weight:bold; color:${getCategoryColor(cat)}">${percent}%</div>
-    <div>${categories[cat].name} Completed</div>
-    <div style="font-size:12px; color:#9ca3af;">(${completed}/${total} tasks)</div>
-    <div class="progress-bar" aria-label="${percent}% complete">
-      <div class="progress-fill" style="width:${percent}%; background-color:${getCategoryColor(cat)}"></div>
-    </div>`;
-    container.appendChild(div);
-  }
-
-  const overallCompleted = filteredTasks.filter(t => t.status === "completed").length;
-  const overallTotal = filteredTasks.length;
-  const overallPercent = overallTotal ? Math.round(overallCompleted / overallTotal * 100) : 0;
-
-  const overallDiv = document.createElement("div");
-  overallDiv.className = "dashboard-item";
-  overallDiv.innerHTML = `
-  <div style="font-size:24px; font-weight:bold; color:#a5b4fc;">${overallPercent}%</div>
-  <div>Overall Completed</div>
-  <div style="font-size:12px; color:#9ca3af;">(${overallCompleted}/${overallTotal} tasks)</div>
-  <div class="progress-bar" aria-label="${overallPercent}% complete">
-    <div class="progress-fill" style="width:${overallPercent}%; background-color:#a5b4fc"></div>
-  </div>`;
-  container.appendChild(overallDiv);
-}
-
-function groupTasksByYearMonthDate() {
-  const grouped = {};
-  tasks.forEach(t => {
-    const d = new Date(t.dueDate + 'T00:00:00Z');
-    const y = d.getUTCFullYear();
-    const m = d.getUTCMonth();
-    if (!grouped[y]) grouped[y] = {};
-    if (!grouped[y][m]) grouped[y][m] = {};
-    if (!grouped[y][m][t.dueDate]) grouped[y][m][t.dueDate] = [];
-    grouped[y][m][t.dueDate].push(t);
-  });
-  return grouped;
-}
-
-function clearAllSelectionHighlight(){
-  document.querySelectorAll('.year-title, .month-title, .date-title').forEach(el=>el.classList.remove('selected'));
-}
-
-function renderTasksByYearMonthDate(){
-  const container = document.getElementById('tasksByDate');
-  container.innerHTML = '';
-
-  const grouped = groupTasksByYearMonthDate();
-
-  const years = Object.keys(grouped).sort((a,b)=>b-a);
-
-  if(years.length===0){
-    container.innerHTML = "<p>No tasks available</p>";
-    return;
-  }
-
-  years.forEach(year=>{
-    const yearGroup = document.createElement('div');
-    yearGroup.className = 'year-group';
-
-    const yearTitle = document.createElement('div');
-    yearTitle.className = 'year-title';
-    yearTitle.textContent = year;
-    yearTitle.style.userSelect='none';
-
-    if(currentFilter.year === +year && currentFilter.month === null && currentFilter.day === null){
-      yearTitle.classList.add('selected');
-    }
-
-    yearTitle.onclick = () => {
-      clearAllSelectionHighlight();
-      // Toggle expansion for year
-      if(expandedYears.has(year)){
-        expandedYears.delete(year);
-        currentFilter = {year:null,month:null,day:null};
-      } else {
-        expandedYears.clear();
-        expandedMonths.clear();
-        expandedYears.add(year);
-        currentFilter = {year:+year, month:null, day:null};
-      }
-      expandedMonths.clear();
-      renderAll();
+  <script>
+    const categories = {
+      workout: { name: "Workout", colorClass: "category-workout" },
+      personal: { name: "Personal", colorClass: "category-personal" },
+      professional: { name: "Professional", colorClass: "category-professional" },
+      finance: { name: "Finance", colorClass: "category-finance" },
     };
 
-    const monthsContainer = document.createElement('div');
-    monthsContainer.className = 'months-container';
-    monthsContainer.style.marginLeft = '8px';
-    monthsContainer.style.display = expandedYears.has(year) ? 'block' : 'none';
+    let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
+    let currentFilter = { year: null, month: null, day: null };
+    let expandedYears = new Set();
+    let expandedMonths = new Set();
 
-    const months = Object.keys(grouped[year]).sort((a,b)=>a-b);
+    // Save to localStorage
+    function saveTasks() {
+      localStorage.setItem("tasks", JSON.stringify(tasks));
+    }
 
-    months.forEach(month=>{
-      const monthGroup = document.createElement('div');
-      monthGroup.className = 'month-group';
+    // Add task handler
+    function addTask() {
+      const titleInput = document.getElementById("taskTitle");
+      const descriptionInput = document.getElementById("taskDescription");
+      const categoryInput = document.getElementById("taskCategory");
+      const dateInput = document.getElementById("taskDate");
 
-      const monthTitle = document.createElement('div');
-      monthTitle.className = 'month-title';
-      monthTitle.textContent = getMonthName(+month);
-      monthTitle.style.userSelect = 'none';
+      const title = titleInput.value.trim();
+      const description = descriptionInput.value.trim();
+      const category = categoryInput.value;
+      const dueDate = dateInput.value;
 
-      if(currentFilter.year === +year && currentFilter.month === +month && currentFilter.day === null){
-        monthTitle.classList.add('selected');
+      if (!title) {
+        alert("Please enter task title.");
+        return;
+      }
+      if (!dueDate) {
+        alert("Please select a due date.");
+        return;
       }
 
-      monthTitle.onclick = () => {
-        clearAllSelectionHighlight();
-        if(expandedMonths.has(month)){
-          expandedMonths.delete(month);
-          currentFilter = {year:+year, month:null, day:null};
-        } else {
-          expandedMonths.add(month);
-          currentFilter = {year:+year, month:+month, day:null};
+      tasks.push({
+        id: Date.now().toString(),
+        title,
+        description,
+        category,
+        dueDate,
+        status: "pending",
+        subtasks: [],
+      });
+
+      saveTasks();
+
+      titleInput.value = "";
+      descriptionInput.value = "";
+      dateInput.value = new Date().toISOString().slice(0, 10);
+
+      renderAll();
+    }
+
+    // Add subtask
+    function addSubtask(taskId) {
+      const input = document.getElementById('subtaskInput-' + taskId);
+      if (!input) return;
+      const val = input.value.trim();
+      if (!val) return;
+      tasks.forEach(t => {
+        if (t.id === taskId) {
+          t.subtasks.push({ id: Date.now().toString(), title: val, status: "pending" });
+          t.status = "pending"; // Subtask affects parent status
         }
-        renderAll();
-      };
+      });
+      saveTasks();
+      input.value = "";
+      renderAll();
+    }
 
-      const datesContainer = document.createElement('div');
-      datesContainer.className = 'dates-container';
-      datesContainer.style.display = expandedMonths.has(month) ? 'block' : 'none';
-      datesContainer.style.marginLeft = '16px';
+    // Delete task
+    function deleteTask(taskId) {
+      if (!confirm("Delete this task?")) return;
+      tasks = tasks.filter(t => t.id !== taskId);
+      saveTasks();
+      renderAll();
+    }
 
-      const dates = Object.keys(grouped[year][month]).sort();
-
-      dates.forEach(date => {
-        const dateGroup = document.createElement('div');
-        dateGroup.className = 'date-group';
-
-        const dateTitle = document.createElement('div');
-        dateTitle.className = 'date-title';
-        dateTitle.textContent = date;
-        dateTitle.style.userSelect = 'none';
-
-        if(currentFilter.year === +year && currentFilter.month === +month && currentFilter.day === date){
-          dateTitle.classList.add('selected');
+    // Delete subtask
+    function deleteSubtask(taskId, subtaskId) {
+      tasks.forEach(t => {
+        if (t.id === taskId) {
+          t.subtasks = t.subtasks.filter(sub => sub.id !== subtaskId);
+          if (t.subtasks.length > 0) {
+            t.status = t.subtasks.every(sub => sub.status === "completed") ? "completed" : "pending";
+          } else {
+            // If no subtasks left, keep status pending
+            t.status = "pending";
+          }
         }
+      });
+      saveTasks();
+      renderAll();
+    }
 
-        dateTitle.onclick = () => {
+    // Toggle status
+    function toggleStatus(taskId, subtaskId = null) {
+      tasks.forEach(task => {
+        if (task.id === taskId) {
+          if (subtaskId === null) {
+            const newStatus = (task.status === "pending") ? "completed" : "pending";
+            task.status = newStatus;
+            task.subtasks.forEach(s => s.status = newStatus);
+          } else {
+            task.subtasks.forEach(sub => {
+              if (sub.id === subtaskId) {
+                sub.status = (sub.status === "pending") ? "completed" : "pending";
+              }
+            });
+            task.status = task.subtasks.length === 0 ? task.status : (task.subtasks.every(s => s.status === "completed") ? "completed" : "pending");
+          }
+        }
+      });
+      saveTasks();
+      renderAll();
+    }
+
+    // Escape HTML safely
+    function escapeHtml(text) {
+      return text.replace(/[&<>"']/g, m => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[m]);
+    }
+
+    // Editing tasks inline
+    function startEditTask(taskId) {
+      const task = tasks.find(t => t.id === taskId);
+      if (!task) return;
+      const container = document.getElementById('taskEditContainer-' + taskId);
+      if (!container) return;
+      container.innerHTML = `
+        <input type="text" class="edit-input" id="editTitle-${taskId}" value="${escapeHtml(task.title)}" placeholder="Task Title" />
+        <textarea class="edit-textarea" id="editDesc-${taskId}" placeholder="Optional Description">${escapeHtml(task.description)}</textarea>
+        <input type="date" class="edit-date" id="editDate-${taskId}" value="${task.dueDate}" />
+        <div class="edit-buttons-container">
+          <button type="button" onclick="saveEditTask('${taskId}')">Save</button>
+          <button type="button" onclick="cancelEditTask('${taskId}')">Cancel</button>
+        </div>
+      `;
+      disableEditButtons(true);
+    }
+
+    function saveEditTask(taskId) {
+      const titleInput = document.getElementById('editTitle-' + taskId);
+      const descInput = document.getElementById('editDesc-' + taskId);
+      const dateInput = document.getElementById('editDate-' + taskId);
+      if (!titleInput.value.trim()) {
+        alert("Title cannot be empty.");
+        titleInput.focus();
+        return;
+      }
+      if (!dateInput.value) {
+        alert("Please select a due date.");
+        dateInput.focus();
+        return;
+      }
+      const task = tasks.find(t => t.id === taskId);
+      if (!task) return;
+      task.title = titleInput.value.trim();
+      task.description = descInput.value.trim();
+      task.dueDate = dateInput.value;
+      saveTasks();
+      cancelEditTask(taskId);
+      renderAll();
+      disableEditButtons(false);
+    }
+
+    function cancelEditTask(taskId) {
+      const container = document.getElementById('taskEditContainer-' + taskId);
+      if (!container) return;
+      container.innerHTML = '';
+      renderAll();
+      disableEditButtons(false);
+    }
+
+    // Editing subtasks inline
+    function startEditSubtask(taskId, subtaskId) {
+      const task = tasks.find(t => t.id === taskId);
+      if (!task) return;
+      const subtask = task.subtasks.find(sub => sub.id === subtaskId);
+      if (!subtask) return;
+      const span = document.getElementById('subtaskTitleSpan-' + subtaskId);
+      if (!span) return;
+      span.style.display = 'none';
+
+      const input = document.createElement('input');
+      input.type = "text";
+      input.value = subtask.title;
+      input.className = 'subtask-edit-input';
+      input.id = 'editSubtaskInput-' + subtaskId;
+
+      input.addEventListener('keydown', e => {
+        if (e.key === 'Enter') saveEditSubtask(taskId, subtaskId);
+        else if (e.key === 'Escape') cancelEditSubtask(subtaskId);
+      });
+      input.addEventListener('blur', () => saveEditSubtask(taskId, subtaskId));
+
+      span.parentNode.insertBefore(input, span.nextSibling);
+      input.focus();
+    }
+
+    function saveEditSubtask(taskId, subtaskId) {
+      const input = document.getElementById('editSubtaskInput-' + subtaskId);
+      if (!input) return;
+      const newTitle = input.value.trim();
+      if (!newTitle) {
+        alert("Subtask title cannot be empty.");
+        input.focus();
+        return;
+      }
+      const task = tasks.find(t => t.id === taskId);
+      if (!task) return;
+      const subtask = task.subtasks.find(sub => sub.id === subtaskId);
+      if (!subtask) return;
+      subtask.title = newTitle;
+      saveTasks();
+      cancelEditSubtask(subtaskId);
+      renderAll();
+    }
+
+    function cancelEditSubtask(subtaskId) {
+      const input = document.getElementById('editSubtaskInput-' + subtaskId);
+      if (!input) return;
+      const span = document.getElementById('subtaskTitleSpan-' + subtaskId);
+      input.remove();
+      if (span) span.style.display = '';
+    }
+
+    function disableEditButtons(disable) {
+      document.querySelectorAll('.edit-btn').forEach(btn => {
+        btn.disabled = disable;
+        btn.style.opacity = disable ? '0.5' : '1';
+        btn.style.cursor = disable ? 'default' : 'pointer';
+      });
+    }
+
+    // Filtering logic and rendering
+
+    function clearFilters() {
+      currentFilter = { year: null, month: null, day: null };
+      expandedYears.clear();
+      expandedMonths.clear();
+      document.getElementById('filterDate').value = '';
+      document.getElementById('filterAllDates').checked = true;
+      document.getElementById('filterDate').disabled = true;
+      document.getElementById('filterCategory').value = '';
+      document.getElementById('filterStatus').value = '';
+      renderAll();
+    }
+
+    function getFilteredTasks() {
+      const categoryFilter = document.getElementById("filterCategory").value;
+      const statusFilter = document.getElementById("filterStatus").value;
+      const showAllDates = document.getElementById("filterAllDates").checked;
+
+      return tasks.filter(t => {
+        if (categoryFilter && t.category !== categoryFilter) return false;
+        if (statusFilter && t.status !== statusFilter) return false;
+        if (showAllDates || (!currentFilter.year && !currentFilter.month && !currentFilter.day)) return true;
+        const taskDate = new Date(t.dueDate + 'T00:00:00Z');
+        if (currentFilter.year && taskDate.getUTCFullYear() !== currentFilter.year) return false;
+        if (currentFilter.month !== null && taskDate.getUTCMonth() !== currentFilter.month) return false;
+        if (currentFilter.day && t.dueDate !== currentFilter.day) return false;
+        return true;
+      });
+    }
+
+    function getCategoryColor(cat) {
+      switch (cat) {
+        case "workout": return "#ff8792";
+        case "personal": return "#fdfd65";
+        case "professional": return "#89ffd5";
+        case "finance": return "#f6ca97";
+        default: return "#ccc";
+      }
+    }
+
+    function renderTasks() {
+      const container = document.getElementById("tasksGrouped");
+      container.innerHTML = "";
+      const filtered = getFilteredTasks();
+      if (filtered.length === 0) {
+        container.innerHTML = "<p style='text-align:center;color:#7b84a7;'>No tasks match the filters.</p>";
+        return;
+      }
+      const groupedByCat = {};
+      Object.keys(categories).forEach(k => groupedByCat[k] = []);
+      filtered.forEach(t => groupedByCat[t.category].push(t));
+
+      Object.keys(groupedByCat).forEach(cat => {
+        if (groupedByCat[cat].length === 0) return;
+        const sec = document.createElement("div");
+        sec.className = "category-section";
+        const title = document.createElement("div");
+        title.className = "category-title " + categories[cat].colorClass;
+        title.textContent = categories[cat].name;
+        sec.appendChild(title);
+        groupedByCat[cat].forEach(task => {
+          const taskDiv = document.createElement("div");
+          taskDiv.className = "task-card";
+          const completedClass = (task.status === "completed") ? "completed" : "";
+          taskDiv.innerHTML = `
+            <div class="task-header">
+              <div class="task-left">
+                <input type="checkbox" ${task.status === "completed" ? "checked" : ""} onchange="toggleStatus('${task.id}')" aria-label="Toggle task status" />
+                <span class="task-title-span ${completedClass}" title="View Details" onclick="showTaskModal('${task.id}')" tabindex="0" role="button" aria-pressed="false">${escapeHtml(task.title)}</span>
+              </div>
+              <div class="task-controls">
+                <button class="edit-btn" title="Edit Task" aria-label="Edit task" onclick="startEditTask('${task.id}')">&#9998;</button>
+                <button class="task-delete-btn" title="Delete Task" aria-label="Delete task" onclick="deleteTask('${task.id}')">&#128465;</button>
+              </div>
+            </div>
+            <small style="font-style: italic; color:#8a8fbc;">Due: ${task.dueDate}</small>
+            <div id="taskEditContainer-${task.id}" class="edit-container"></div>
+            <div class="subtasks">
+              ${task.subtasks.map(sub => `
+                <div class="subtask" id="subtaskDiv-${sub.id}">
+                  <div class="subtask-title-container">
+                    <input type="checkbox" ${sub.status === "completed" ? "checked" : ""} onchange="toggleStatus('${task.id}','${sub.id}')" aria-label="Toggle subtask status" />
+                    <span id="subtaskTitleSpan-${sub.id}" class="${sub.status === 'completed' ? 'completed' : ''}" onclick="startEditSubtask('${task.id}','${sub.id}')" tabindex="0" role="button" aria-pressed="false">${escapeHtml(sub.title)}</span>
+                  </div>
+                  <button class="subtask-delete-btn" title="Delete Subtask" aria-label="Delete subtask" onclick="deleteSubtask('${task.id}','${sub.id}')">&#128465;</button>
+                </div>
+              `).join('')}
+              <div class="add-subtask-container">
+                <input type="text" id="subtaskInput-${task.id}" placeholder="Add subtask" autocomplete="off"/>
+                <button type="button" onclick="addSubtask('${task.id}')">Add</button>
+              </div>
+            </div>`;
+          sec.appendChild(taskDiv);
+        });
+        container.appendChild(sec);
+      });
+    }
+
+    // Dashboard rendering
+    function getFilterPeriodText() {
+      if (currentFilter.day) return `Daily Progress - ${currentFilter.day}`;
+      if (currentFilter.month !== null && currentFilter.year) return `Monthly Progress - ${new Date(2000, currentFilter.month).toLocaleString('default', {month:'long'})} ${currentFilter.year}`;
+      if (currentFilter.year) return `Yearly Progress - ${currentFilter.year}`;
+      return "Overall Progress - All Tasks";
+    }
+
+    function renderDashboard() {
+      const container = document.getElementById("dashboard");
+      const indicator = document.getElementById("filterIndicator");
+      container.innerHTML = "";
+      indicator.textContent = getFilterPeriodText();
+
+      const filtered = getFilteredTasks();
+
+      for (const cat in categories) {
+        const catTasks = filtered.filter(t => t.category === cat);
+        const completed = catTasks.filter(t => t.status === "completed").length;
+        const total = catTasks.length;
+        const percent = total ? Math.round(completed / total * 100) : 0;
+
+        const div = document.createElement("div");
+        div.className = "dashboard-item";
+        div.innerHTML = `
+          <div style="color:${getCategoryColor(cat)}">${percent}%</div>
+          <div>${categories[cat].name} Completed</div>
+          <div style="font-size:12px; color:#9ca3af;">(${completed}/${total} tasks)</div>
+          <div class="progress-bar" aria-label="${percent}% complete">
+            <div class="progress-fill" style="width:${percent}%; background-color:${getCategoryColor(cat)}"></div>
+          </div>`;
+        container.appendChild(div);
+      }
+      const overallCompleted = filtered.filter(t => t.status === "completed").length;
+      const overallTotal = filtered.length;
+      const overallPercent = overallTotal ? Math.round(overallCompleted / overallTotal * 100) : 0;
+
+      const overallDiv = document.createElement("div");
+      overallDiv.className = "dashboard-item";
+      overallDiv.innerHTML = `
+        <div style="color:#6c8fff; font-size: 26px; font-weight: bold;">${overallPercent}%</div>
+        <div>Overall Completed</div>
+        <div style="font-size:12px; color:#aab7db;">(${overallCompleted}/${overallTotal} tasks)</div>
+        <div class="progress-bar" aria-label="Overall progress ${overallPercent} percent complete">
+          <div class="progress-fill" style="width:${overallPercent}%; background-color:#6c8fff"></div>
+        </div>`;
+      container.appendChild(overallDiv);
+    }
+
+    // Group tasks by year/month/date for sidebar
+    function groupTasksByYearMonthDate() {
+      const grouped = {};
+      tasks.forEach(t => {
+        const d = new Date(t.dueDate + 'T00:00:00Z');
+        const y = d.getUTCFullYear();
+        const m = d.getUTCMonth();
+        if (!grouped[y]) grouped[y] = {};
+        if (!grouped[y][m]) grouped[y][m] = {};
+        if (!grouped[y][m][t.dueDate]) grouped[y][m][t.dueDate] = [];
+        grouped[y][m][t.dueDate].push(t);
+      });
+      return grouped;
+    }
+
+    // Clear sidebar selection highlight
+    function clearAllSelectionHighlight() {
+      document.querySelectorAll('.year-title, .month-title, .date-title').forEach(el => el.classList.remove('selected'));
+    }
+
+    // Render sidebar calendar tree
+    function renderTasksByYearMonthDate() {
+      const container = document.getElementById('tasksByDate');
+      container.innerHTML = '';
+      const grouped = groupTasksByYearMonthDate();
+      const years = Object.keys(grouped).sort((a,b) => b-a);
+      if (years.length === 0) {
+        container.innerHTML = "<p>No tasks available</p>";
+        return;
+      }
+      years.forEach(year => {
+        const yearGroup = document.createElement('div');
+        yearGroup.className = 'year-group';
+        const yearTitle = document.createElement('div');
+        yearTitle.className = 'year-title';
+        yearTitle.textContent = year;
+        yearTitle.style.userSelect = 'none';
+        if(currentFilter.year === +year && currentFilter.month === null && currentFilter.day === null) yearTitle.classList.add('selected');
+        yearTitle.onclick = () => {
           clearAllSelectionHighlight();
-          currentFilter = {year:+year, month:+month, day:date};
-          expandedYears.add(year);
-          expandedMonths.add(month);
+          if(expandedYears.has(year)){
+            expandedYears.delete(year);
+            currentFilter = { year:null, month:null, day:null};
+            expandedMonths.clear();
+          } else {
+            expandedYears.clear();
+            expandedMonths.clear();
+            expandedYears.add(year);
+            currentFilter = { year:+year, month:null, day:null};
+          }
           renderAll();
         };
-
-        // Tasks container under a date in sidebar:
-        const tasksContainer = document.createElement('div');
-        tasksContainer.className = 'sidebar-tasks-container';
-        tasksContainer.style.display = (currentFilter.year === +year && currentFilter.month === +month && currentFilter.day === date) ? 'block' : 'none';
-
-        grouped[year][month][date].forEach(t=>{
-          const taskDiv = document.createElement('div');
-          taskDiv.className = 'sidebar-task';
-          if(t.status === 'completed') taskDiv.classList.add('completed');
-          taskDiv.textContent = `[${categories[t.category].name}] ${t.title}`;
-          tasksContainer.appendChild(taskDiv);
+        const monthsContainer = document.createElement('div');
+        monthsContainer.className = 'months-container';
+        monthsContainer.style.marginLeft = '8px';
+        monthsContainer.style.display = expandedYears.has(year) ? 'block' : 'none';
+        const months = Object.keys(grouped[year]).sort((a,b) => a-b);
+        months.forEach(month => {
+          const monthGroup = document.createElement('div');
+          monthGroup.className = 'month-group';
+          const monthTitle = document.createElement('div');
+          monthTitle.className = 'month-title';
+          monthTitle.textContent = new Date(2000, +month).toLocaleString('default', {month:'long'});
+          monthTitle.style.userSelect = 'none';
+          if(currentFilter.year === +year && currentFilter.month === +month && currentFilter.day === null) monthTitle.classList.add('selected');
+          monthTitle.onclick = () => {
+            clearAllSelectionHighlight();
+            if(expandedMonths.has(month)){
+              expandedMonths.delete(month);
+              currentFilter = { year:+year, month:null, day:null};
+            } else {
+              expandedMonths.add(month);
+              currentFilter = { year:+year, month:+month, day:null};
+            }
+            renderAll();
+          };
+          const datesContainer = document.createElement('div');
+          datesContainer.className = 'dates-container';
+          datesContainer.style.display = expandedMonths.has(month) ? 'block' : 'none';
+          datesContainer.style.marginLeft = '16px';
+          const dates = Object.keys(grouped[year][month]).sort();
+          dates.forEach(date => {
+            const dateGroup = document.createElement('div');
+            dateGroup.className = 'date-group';
+            const dateTitle = document.createElement('div');
+            dateTitle.className = 'date-title';
+            dateTitle.textContent = date;
+            dateTitle.style.userSelect = 'none';
+            if(currentFilter.year === +year && currentFilter.month === +month && currentFilter.day === date) dateTitle.classList.add('selected');
+            dateTitle.onclick = () => {
+              clearAllSelectionHighlight();
+              currentFilter = { year:+year, month:+month, day:date};
+              expandedYears.add(year);
+              expandedMonths.add(month);
+              renderAll();
+            };
+            const tasksContainer = document.createElement('div');
+            tasksContainer.className = 'sidebar-tasks-container';
+            tasksContainer.style.display = (currentFilter.year === +year && currentFilter.month === +month && currentFilter.day === date) ? 'block' : 'none';
+            grouped[year][month][date].forEach(t => {
+              const taskDiv = document.createElement('div');
+              taskDiv.className = 'sidebar-task';
+              if(t.status === 'completed') taskDiv.classList.add('completed');
+              taskDiv.textContent = `[${categories[t.category].name}] ${t.title}`;
+              tasksContainer.appendChild(taskDiv);
+            });
+            dateGroup.appendChild(dateTitle);
+            dateGroup.appendChild(tasksContainer);
+            datesContainer.appendChild(dateGroup);
+          });
+          monthGroup.appendChild(monthTitle);
+          monthGroup.appendChild(datesContainer);
+          monthsContainer.appendChild(monthGroup);
         });
-
-        dateGroup.appendChild(dateTitle);
-        dateGroup.appendChild(tasksContainer);
-        datesContainer.appendChild(dateGroup);
+        yearGroup.appendChild(yearTitle);
+        yearGroup.appendChild(monthsContainer);
+        container.appendChild(yearGroup);
       });
+    }
 
-      monthGroup.appendChild(monthTitle);
-      monthGroup.appendChild(datesContainer);
-      monthsContainer.appendChild(monthGroup);
+    // Synchronize filter UI inputs with currentFilter
+    function renderAll() {
+      if (currentFilter.day !== null) {
+        document.getElementById("filterAllDates").checked = false;
+        document.getElementById("filterDate").disabled = false;
+        document.getElementById("filterDate").value = currentFilter.day;
+      } else if (currentFilter.month !== null) {
+        document.getElementById("filterAllDates").checked = true;
+        document.getElementById("filterDate").disabled = true;
+        document.getElementById("filterDate").value = '';
+      } else if (currentFilter.year !== null) {
+        document.getElementById("filterAllDates").checked = true;
+        document.getElementById("filterDate").disabled = true;
+        document.getElementById("filterDate").value = '';
+      } else {
+        document.getElementById("filterAllDates").checked = true;
+        document.getElementById("filterDate").disabled = true;
+        document.getElementById("filterDate").value = '';
+      }
+      renderTasks();
+      renderDashboard();
+      renderTasksByYearMonthDate();
+    }
+
+    // Modal popup for task details
+    const modal = document.getElementById("taskModal");
+    const modalTitle = document.getElementById("modalTaskTitle");
+    const modalDesc = document.getElementById("modalTaskDescription");
+    const modalClose = document.getElementById("taskModalClose");
+
+    function showTaskModal(taskId) {
+      const task = tasks.find(t => t.id === taskId);
+      if (!task) return;
+      modalTitle.textContent = task.title;
+      modalDesc.textContent = task.description || "(No description)";
+      modal.style.display = "block";
+      modal.focus();
+    }
+
+    modalClose.onclick = () => {
+      modal.style.display = "none";
+    };
+
+    window.onclick = event => {
+      if (event.target === modal) {
+        modal.style.display = "none";
+      }
+    };
+
+    // Event listeners for filters UI
+    document.getElementById("filterCategory").addEventListener("change", renderAll);
+    document.getElementById("filterStatus").addEventListener("change", renderAll);
+
+    document.getElementById("filterDate").addEventListener("change", () => {
+      if(document.getElementById("filterAllDates").checked) return;
+      const val = document.getElementById("filterDate").value || null;
+      if (val) {
+        const d = new Date(val + 'T00:00:00Z');
+        currentFilter = {year: d.getUTCFullYear(), month: d.getUTCMonth(), day: val};
+        expandedYears = new Set([d.getUTCFullYear().toString()]);
+        expandedMonths = new Set([d.getUTCMonth().toString()]);
+      }
+      renderAll();
     });
 
-    yearGroup.appendChild(yearTitle);
-    yearGroup.appendChild(monthsContainer);
-    container.appendChild(yearGroup);
-  });
-}
+    document.getElementById("filterAllDates").addEventListener("change", e => {
+      const checked = e.target.checked;
+      if (checked) {
+        currentFilter = { year: null, month: null, day: null };
+        expandedYears.clear();
+        expandedMonths.clear();
+        document.getElementById("filterDate").disabled = true;
+        document.getElementById("filterDate").value = '';
+      } else {
+        const today = new Date().toISOString().slice(0, 10);
+        const d = new Date(today + 'T00:00:00Z');
+        currentFilter = {year: d.getUTCFullYear(), month: d.getUTCMonth(), day: today};
+        expandedYears = new Set([d.getUTCFullYear().toString()]);
+        expandedMonths = new Set([d.getUTCMonth().toString()]);
+        document.getElementById("filterDate").disabled = false;
+        document.getElementById("filterDate").value = today;
+      }
+      renderAll();
+    });
 
-function renderAll(){
-  // Control filter UI inputs consistency with currentFilter
-
-  if(currentFilter.day !== null){
-    document.getElementById("filterAllDates").checked = false;
-    document.getElementById("filterDate").disabled = false;
-    document.getElementById("filterDate").value = currentFilter.day;
-  } else if(currentFilter.month !== null){
-    document.getElementById("filterAllDates").checked = true;
-    document.getElementById("filterDate").disabled = true;
-    document.getElementById("filterDate").value = '';
-  } else if(currentFilter.year !== null){
-    document.getElementById("filterAllDates").checked = true;
-    document.getElementById("filterDate").disabled = true;
-    document.getElementById("filterDate").value = '';
-  } else {
-    document.getElementById("filterAllDates").checked = true;
-    document.getElementById("filterDate").disabled = true;
-    document.getElementById("filterDate").value = '';
-  }
-
-  renderTasks();
-  renderDashboard();
-  renderTasksByYearMonthDate();
-}
-
-document.getElementById("filterCategory").addEventListener("change", () => {
-  renderAll();
-});
-document.getElementById("filterStatus").addEventListener("change", () => {
-  renderAll();
-});
-document.getElementById("filterDate").addEventListener("change", () => {
-  if(document.getElementById("filterAllDates").checked) return;
-  currentFilter = {
-    year: null,
-    month: null,
-    day: document.getElementById("filterDate").value || null
-  };
-  expandedYears.clear();
-  expandedMonths.clear();
-  renderAll();
-});
-document.getElementById("filterAllDates").addEventListener("change", (e) => {
-  const checked = e.target.checked;
-  if(checked){
-    document.getElementById("filterDate").disabled = true;
-    currentFilter = {year:null, month:null, day:null};
-  } else {
-    document.getElementById("filterDate").disabled = false;
-    if(!document.getElementById("filterDate").value){
+    // Initialization
+    function init() {
       const today = new Date().toISOString().slice(0,10);
+      document.getElementById("taskDate").value = today;
       document.getElementById("filterDate").value = today;
+      document.getElementById("filterAllDates").checked = false;
+      document.getElementById("filterDate").disabled = false;
+      const d = new Date(today + 'T00:00:00Z');
+      currentFilter = { year: d.getUTCFullYear(), month: d.getUTCMonth(), day: today };
+      expandedYears = new Set([d.getUTCFullYear().toString()]);
+      expandedMonths = new Set([d.getUTCMonth().toString()]);
+      renderAll();
     }
-    currentFilter = {
-      year: null,
-      month: null,
-      day: document.getElementById("filterDate").value
-    };
-  }
-  expandedYears.clear();
-  expandedMonths.clear();
-  renderAll();
-});
-
-function init(){
-  // Initialize default filter to all dates shown
-  currentFilter = {year:null, month:null, day:null};
-  expandedYears.clear();
-  expandedMonths.clear();
-
-  document.getElementById("filterAllDates").checked = true;
-  document.getElementById("filterDate").disabled = true;
-
-  document.getElementById("taskDate").value = new Date().toISOString().slice(0,10);
-
-  renderAll();
-}
-
-init();
-</script>
-
+    init();
+  </script>
 </body>
 </html>
