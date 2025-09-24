@@ -3,12 +3,10 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>TaskMe - Todo App with Subtasks and Editing</title>
+<title>TaskMe - Todo App with Move Task and Button Updates</title>
 <style>
   /* Reset and base styles */
-  * {
-    box-sizing: border-box;
-  }
+  * { box-sizing: border-box; }
   html, body {
     margin: 0; padding: 0; height: 100%;
     font-family: Arial, sans-serif;
@@ -31,20 +29,9 @@
     overflow-y: auto;
     flex-shrink: 0;
   }
-  #sidebar h2 {
-    margin-top: 0;
-    margin-bottom: 15px;
-    color: #a6b7f2;
-  }
-  #sidebar h3 {
-    margin-top: 20px;
-    margin-bottom: 10px;
-    color: #9ca6d8;
-    font-size: 16px;
-  }
-  .input-group {
-    margin-bottom: 16px;
-  }
+  #sidebar h2 { margin-top: 0; margin-bottom: 15px; color: #a6b7f2; }
+  #sidebar h3 { margin-top: 20px; margin-bottom: 10px; color: #9ca6d8; font-size: 16px; }
+  .input-group { margin-bottom: 16px; }
   .date-filters {
     display: flex;
     gap: 8px;
@@ -72,9 +59,7 @@
     cursor: pointer;
     transition: background-color 0.3s ease;
   }
-  button.clear:hover {
-    background-color: #ff9d9d;
-  }
+  button.clear:hover { background-color: #ff9d9d; }
   label {
     user-select: none;
     color: #a3a3c2;
@@ -155,9 +140,7 @@
     box-shadow: 0 0 10px #4a5599aa;
     transition: box-shadow 0.3s ease;
   }
-  .task-card:hover {
-    box-shadow: 0 0 14px #6c8fffdd;
-  }
+  .task-card:hover { box-shadow: 0 0 14px #6c8fffdd; }
   .task-header {
     display: flex;
     align-items: center;
@@ -184,11 +167,64 @@
     text-decoration: line-through;
     opacity: 0.7;
   }
-  .task-controls {
-    display: flex;
-    gap: 14px;
+
+  /* Unified button style for Edit, Delete, Move */
+  .action-btn-inline {
+    font-size: 20px;
+    width: 26px;
+    height: 26px;
+    padding: 0;
+    background: #fff;
+    color: #ff4d4d;
+    border: none;
+    border-radius: 6px;
+    margin: 0 3px;
+    cursor: pointer;
+    display: inline-flex;
     align-items: center;
+    justify-content: center;
+    transition: color 0.25s ease;
   }
+  .action-btn-inline:hover {
+    color: #ff1a1a;
+  }
+
+  /* Move task interface */
+  .move-task-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 8px;
+  }
+  .move-task-container input[type="date"] {
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 14px;
+    border: 1px solid #394fa9;
+    background: #181a25;
+    color: #e5e6f0;
+  }
+  .move-task-container button {
+    background-color: #6c8fff;
+    border: none;
+    border-radius: 6px;
+    color: #181a25;
+    font-weight: 600;
+    padding: 6px 12px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+  .move-task-container button.cancel-btn {
+    background-color: #eb7070;
+    color: #fff;
+  }
+  .move-task-container button:hover {
+    background-color: #3851a7;
+  }
+  .move-task-container button.cancel-btn:hover {
+    background-color: #ff4d4d;
+  }
+
   .edit-form {
     margin-top: 10px;
   }
@@ -274,9 +310,7 @@
     border-radius: 6px;
     transition: color 0.25s ease;
   }
-  .subtask-delete-btn:hover {
-    color: #ff1a1a;
-  }
+  .subtask-delete-btn:hover { color: #ff1a1a; }
   .add-subtask-container {
     margin-top: 12px;
     display: flex;
@@ -375,16 +409,13 @@
 <body>
   <aside id="sidebar" role="complementary" aria-label="Task Filters">
     <h2>Filters</h2>
-    
     <h3>Date Filters</h3>
     <div class="input-group">
       <label><input type="checkbox" id="filterAllDates" checked /> Show All Dates</label>
     </div>
-    
     <div class="input-group">
       <input type="date" id="filterDate" aria-label="Filter tasks by specific date" disabled />
     </div>
-    
     <div class="input-group">
       <div class="date-filters">
         <select id="filterYear" aria-label="Filter by year" disabled>
@@ -410,7 +441,6 @@
         </select>
       </div>
     </div>
-
     <h3>Other Filters</h3>
     <div class="input-group">
       <select id="filterCategory" aria-label="Filter tasks by category">
@@ -475,6 +505,7 @@
   };
 
   let currentEditTaskId = null;
+  let currentMoveTaskId = null;
 
   function saveTasks() {
     localStorage.setItem("tasks", JSON.stringify(tasks));
@@ -578,7 +609,7 @@
     return text.replace(/[&<>"']/g, m => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[m]);
   }
 
-  // Rendering tasks grouped by category with edit forms and subtasks
+  // Rendering tasks grouped by category with edit forms, move forms and subtasks
   function renderTasks() {
     const container = document.getElementById("tasksGrouped");
     container.innerHTML = "";
@@ -613,6 +644,8 @@
 
         if (currentEditTaskId === task.id) {
           taskDiv.innerHTML = getEditTaskFormHTML(task);
+        } else if (currentMoveTaskId === task.id) {
+          taskDiv.innerHTML = getMoveTaskFormHTML(task);
         } else {
           const completedClass = (task.status === "completed") ? "completed" : "";
           taskDiv.innerHTML = `
@@ -622,14 +655,14 @@
                 <span class="task-title-span ${completedClass}" title="Task Details">${escapeHtml(task.title)}</span>
               </div>
               <div class="task-controls">
-                <button class="edit-btn" title="Edit Task" aria-label="Edit task" onclick="startEditTask('${task.id}')">&#9998;</button>
-                <button class="task-delete-btn" title="Delete Task" aria-label="Delete task" onclick="deleteTask('${task.id}')">&#128465;</button>
+                <button class="action-btn-inline" title="Edit Task" aria-label="Edit task" onclick="startEditTask('${task.id}')">&#9998;</button>
+                <button class="action-btn-inline" title="Move Task" aria-label="Move task to another date" onclick="startMoveTask('${task.id}')">&#128198;</button>
+                <button class="action-btn-inline" title="Delete Task" aria-label="Delete task" onclick="deleteTask('${task.id}')">&#128465;</button>
               </div>
             </div>
             <small style="font-style: italic; color:#8a8fbc;">Due: ${task.dueDate} | ${escapeHtml(task.description || 'No description')}</small>
 
-            <div class="subtasks" id="subtasks-${task.id}">
-            </div>
+            <div class="subtasks" id="subtasks-${task.id}"></div>
             <div class="add-subtask-container">
               <input type="text" id="newSubtaskInput-${task.id}" placeholder="Add subtask" aria-label="Add subtask for ${escapeHtml(task.title)}" />
               <button onclick="addSubtask('${task.id}')">Add</button>
@@ -638,7 +671,7 @@
         }
         container.appendChild(taskDiv);
 
-        if (currentEditTaskId !== task.id) {
+        if (currentEditTaskId !== task.id && currentMoveTaskId !== task.id) {
           // Render subtasks
           const subtasksContainer = document.getElementById(`subtasks-${task.id}`);
           task.subtasks.forEach(sub => {
@@ -678,6 +711,16 @@
     `;
   }
 
+  function getMoveTaskFormHTML(task) {
+    return `
+      <div class="move-task-container" role="form" aria-label="Move task date">
+        <input type="date" id="moveDate-${task.id}" value="${task.dueDate}" aria-label="Select new due date" />
+        <button onclick="saveMovedTask('${task.id}')" aria-label="Save moved task date">Save</button>
+        <button class="cancel-btn" onclick="cancelMove()" aria-label="Cancel move">Cancel</button>
+      </div>
+    `;
+  }
+
   function saveEditedTask(taskId) {
     const title = document.getElementById(`editTitle-${taskId}`).value.trim();
     const description = document.getElementById(`editDescription-${taskId}`).value.trim();
@@ -702,12 +745,50 @@
 
     saveTasks();
     currentEditTaskId = null;
+    currentMoveTaskId = null;
     initializeDateFilters();
     renderAll();
   }
 
   function cancelEdit() {
     currentEditTaskId = null;
+    renderAll();
+  }
+
+  function startEditTask(taskId) {
+    currentEditTaskId = taskId;
+    currentMoveTaskId = null;
+    renderAll();
+  }
+
+  // Move task logic
+  function startMoveTask(taskId) {
+    currentMoveTaskId = taskId;
+    currentEditTaskId = null;
+    renderAll();
+  }
+
+  function cancelMove() {
+    currentMoveTaskId = null;
+    renderAll();
+  }
+
+  function saveMovedTask(taskId) {
+    const input = document.getElementById(`moveDate-${taskId}`);
+    const newDate = input.value;
+    if (!newDate) {
+      alert("Please select a date.");
+      return;
+    }
+    tasks = tasks.map(t => {
+      if (t.id === taskId) {
+        return {...t, dueDate: newDate};
+      }
+      return t;
+    });
+    saveTasks();
+    currentMoveTaskId = null;
+    initializeDateFilters();
     renderAll();
   }
 
@@ -783,17 +864,13 @@
   function deleteTask(taskId) {
     if (!confirm("Delete this task?")) return;
     if (currentEditTaskId === taskId) currentEditTaskId = null;
+    if (currentMoveTaskId === taskId) currentMoveTaskId = null;
     tasks = tasks.filter(t => t.id !== taskId);
     saveTasks();
     renderAll();
   }
 
-  function startEditTask(taskId) {
-    currentEditTaskId = taskId;
-    renderAll();
-  }
-
-  // Filters logic from before
+  // Filters logic
   function clearFilters() {
     currentFilter = { 
       year: null, 
