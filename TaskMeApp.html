@@ -3,349 +3,103 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>TaskMe - Todo App with Move Task and Button Updates</title>
+<title>TaskMe - Todo App with GitHub Gist Sync</title>
 <style>
   /* Reset and base styles */
   * { box-sizing: border-box; }
-  html, body {
-    margin: 0; padding: 0; height: 100%;
-    font-family: Arial, sans-serif;
-    background: #1e2230;
-    color: #e5e6f0;
-  }
-  body {
-    display: flex;
-    flex-direction: row;
-    height: 100vh;
-    overflow: hidden;
-  }
+  html, body { margin: 0; padding: 0; height: 100%; font-family: Arial, sans-serif; background: #1e2230; color: #e5e6f0; }
+  body { display: flex; flex-direction: row; height: 100vh; overflow: hidden; }
+
+  /* Sync status */
+  .sync-status { position: fixed; top: 10px; right: 10px; padding: 8px 16px; border-radius: 20px; font-size: 12px; font-weight: 600; z-index: 1000; transition: all 0.3s ease; }
+  .sync-status.synced { background: #4ade80; color: #166534; }
+  .sync-status.syncing { background: #fbbf24; color: #92400e; }
+  .sync-status.offline { background: #ef4444; color: #991b1b; }
+
+  /* Configuration modal */
+  .config-modal { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); }
+  .config-content { background-color: #23263a; margin: 5% auto; padding: 20px; border: 2px solid #394fa9; border-radius: 15px; width: 90%; max-width: 600px; color: #e5e6f0; position: relative; }
+  .close-config { color: #aaa; float: right; font-size: 28px; font-weight: bold; cursor: pointer; position: absolute; right: 15px; top: 10px; }
+  .close-config:hover { color: #fff; }
+  .config-section { margin-bottom: 20px; }
+  .config-section h3 { color: #6c8fff; margin-bottom: 10px; }
+  .config-section textarea, .config-section input { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #434a63; background: #1e2230; color: #e5e6f0; font-family: monospace; font-size: 14px; margin-bottom: 10px; }
+  .config-section button { background-color: #6c8fff; color: #181a25; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; margin-right: 10px; }
+  .config-section button:hover { background-color: #3851a7; }
+  .config-section button.danger { background-color: #ef4444; color: #fff; }
+  .config-section button.danger:hover { background-color: #dc2626; }
+  .config-instructions { background: #1e2230; padding: 15px; border-radius: 8px; margin-bottom: 15px; font-size: 14px; line-height: 1.5; }
+  .config-instructions code { background: #394fa9; padding: 2px 6px; border-radius: 4px; font-family: monospace; }
+
   /* Sidebar styles */
-  #sidebar {
-    width: 320px;
-    height: 100vh;
-    background-color: #23263a;
-    border-right: 2px solid #3e5c98;
-    padding: 20px;
-    overflow-y: auto;
-    flex-shrink: 0;
-  }
+  #sidebar { width: 320px; height: 100vh; background-color: #23263a; border-right: 2px solid #3e5c98; padding: 20px; overflow-y: auto; flex-shrink: 0; }
   #sidebar h2 { margin-top: 0; margin-bottom: 15px; color: #a6b7f2; }
   #sidebar h3 { margin-top: 20px; margin-bottom: 10px; color: #9ca6d8; font-size: 16px; }
   .input-group { margin-bottom: 16px; }
-  .date-filters {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
+  .date-filters { display: flex; gap: 8px; flex-wrap: wrap; }
+  .date-filters select { flex: 1; min-width: 70px; }
+  input[type="text"], input[type="date"], select, button.clear {
+    width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #434a63; background-color: #1e2230; color: #e5e6f0; font-size: 16px;
   }
-  .date-filters select {
-    flex: 1;
-    min-width: 70px;
-  }
-  input[type="text"],
-  input[type="date"],
-  select,
-  button.clear {
-    width: 100%;
-    padding: 10px;
-    border-radius: 8px;
-    border: 1px solid #434a63;
-    background-color: #1e2230;
-    color: #e5e6f0;
-    font-size: 16px;
-  }
-  button.clear {
-    background-color: #eb7070;
-    border: none;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-  }
+  button.clear { background-color: #eb7070; border: none; cursor: pointer; transition: background-color 0.3s ease; }
   button.clear:hover { background-color: #ff9d9d; }
   label {
-    user-select: none;
-    color: #a3a3c2;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    cursor: pointer;
-    font-size: 15px;
-    margin-bottom: 8px;
+    user-select: none; color: #a3a3c2; display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 15px; margin-bottom: 8px;
   }
-  #filterDate:disabled,
-  #filterYear:disabled,
-  #filterMonth:disabled,
-  #filterDay:disabled {
-    background-color: #282c44;
-    cursor: not-allowed;
-  }
+  #filterDate:disabled, #filterYear:disabled, #filterMonth:disabled, #filterDay:disabled { background-color: #282c44; cursor: not-allowed; }
 
   /* Main content styles */
-  #mainContent {
-    flex-grow: 1;
-    overflow-y: auto;
-    padding: 20px;
-    background-color: #181a25;
+  #mainContent { flex-grow: 1; overflow-y: auto; padding: 20px; background-color: #181a25; }
+  h1, h2 { color: #6c8fff; text-align: center; }
+  #addTaskForm { max-width: 700px; margin: 0 auto 30px; display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+  #addTaskForm input[type="text"], #addTaskForm textarea, #addTaskForm select, #addTaskForm input[type="date"] {
+    padding: 10px; border-radius: 8px; border: 1px solid #434a63; background: #22263a; color: #e5e6f0; font-size: 16px;
   }
-  h1, h2 {
-    color: #6c8fff;
-    text-align: center;
-  }
-
-  /* Add task form */
-  #addTaskForm {
-    max-width: 700px;
-    margin: 0 auto 30px;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-    justify-content: center;
-  }
-  #addTaskForm input[type="text"],
-  #addTaskForm textarea,
-  #addTaskForm select,
-  #addTaskForm input[type="date"] {
-    padding: 10px;
-    border-radius: 8px;
-    border: 1px solid #434a63;
-    background: #22263a;
-    color: #e5e6f0;
-    font-size: 16px;
-  }
-  #addTaskForm textarea {
-    resize: vertical;
-    min-height: 50px;
-    flex-grow: 1;
-  }
-  #addTaskForm button {
-    background-color: #6c8fff;
-    color: #181a25;
-    font-weight: 600;
-    border: none;
-    padding: 10px 24px;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-    min-width: 120px;
-  }
-  #addTaskForm button:hover {
-    background-color: #3851a7;
-    color: #fff;
-  }
+  #addTaskForm textarea { resize: vertical; min-height: 50px; flex-grow: 1; }
+  #addTaskForm button { background-color: #6c8fff; color: #181a25; font-weight: 600; border: none; padding: 10px 24px; border-radius: 8px; cursor: pointer; transition: background-color 0.3s ease; min-width: 120px; }
+  #addTaskForm button:hover { background-color: #3851a7; color: #fff; }
 
   /* Task card */
-  .task-card {
-    background-color: #22263a;
-    padding: 12px 16px;
-    border-radius: 10px;
-    margin-bottom: 24px;
-    box-shadow: 0 0 10px #4a5599aa;
-    transition: box-shadow 0.3s ease;
-  }
+  .task-card { background-color: #22263a; padding: 12px 16px; border-radius: 10px; margin-bottom: 24px; box-shadow: 0 0 10px #4a5599aa; transition: box-shadow 0.3s ease; }
   .task-card:hover { box-shadow: 0 0 14px #6c8fffdd; }
-  .task-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 6px;
-  }
-  .task-left {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    flex: 1;
-    min-width: 0;
-  }
-  .task-title-span {
-    font-weight: bold;
-    font-size: 18px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    cursor: pointer;
-    user-select: none;
-  }
-  .task-title-span.completed {
-    text-decoration: line-through;
-    opacity: 0.7;
-  }
-
-  /* Unified button style for Edit, Delete, Move */
-  .action-btn-inline {
-    font-size: 20px;
-    width: 26px;
-    height: 26px;
-    padding: 0;
-    background: #fff;
-    color: #ff4d4d;
-    border: none;
-    border-radius: 6px;
-    margin: 0 3px;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    transition: color 0.25s ease;
-  }
-  .action-btn-inline:hover {
-    color: #ff1a1a;
-  }
+  .task-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+  .task-left { display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0; }
+  .task-title-span { font-weight: bold; font-size: 18px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; user-select: none; }
+  .task-title-span.completed { text-decoration: line-through; opacity: 0.7; }
+  .action-btn-inline { font-size: 20px; width: 26px; height: 26px; padding: 0; background: #fff; color: #ff4d4d; border: none; border-radius: 6px; margin: 0 3px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; transition: color 0.25s ease; }
+  .action-btn-inline:hover { color: #ff1a1a; }
 
   /* Move task interface */
-  .move-task-container {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-top: 8px;
-  }
-  .move-task-container input[type="date"] {
-    padding: 6px 10px;
-    border-radius: 6px;
-    font-size: 14px;
-    border: 1px solid #394fa9;
-    background: #181a25;
-    color: #e5e6f0;
-  }
-  .move-task-container button {
-    background-color: #6c8fff;
-    border: none;
-    border-radius: 6px;
-    color: #181a25;
-    font-weight: 600;
-    padding: 6px 12px;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-  }
-  .move-task-container button.cancel-btn {
-    background-color: #eb7070;
-    color: #fff;
-  }
-  .move-task-container button:hover {
-    background-color: #3851a7;
-  }
-  .move-task-container button.cancel-btn:hover {
-    background-color: #ff4d4d;
-  }
+  .move-task-container { display: flex; align-items: center; gap: 10px; margin-top: 8px; }
+  .move-task-container input[type="date"] { padding: 6px 10px; border-radius: 6px; font-size: 14px; border: 1px solid #394fa9; background: #181a25; color: #e5e6f0; }
+  .move-task-container button { background-color: #6c8fff; border: none; border-radius: 6px; color: #181a25; font-weight: 600; padding: 6px 12px; cursor: pointer; transition: background-color 0.3s ease; }
+  .move-task-container button.cancel-btn { background-color: #eb7070; color: #fff; }
+  .move-task-container button:hover { background-color: #3851a7; }
+  .move-task-container button.cancel-btn:hover { background-color: #ff4d4d; }
 
-  .edit-form {
-    margin-top: 10px;
-  }
-  .edit-form input[type="text"],
-  .edit-form textarea,
-  .edit-form select,
-  .edit-form input[type="date"] {
-    background: #181a25;
-    border: 1px solid #394fa9;
-    color: #e5e6f0;
-    margin-bottom: 8px;
-  }
-  .edit-form textarea {
-    resize: vertical;
-  }
-  .edit-form-buttons {
-    display: flex;
-    gap: 10px;
-  }
-  .edit-form button {
-    padding: 6px 16px;
-    border-radius: 6px;
-    cursor: pointer;
-    border: none;
-    font-weight: 600;
-    font-size: 14px;
-  }
-  .edit-form button.save-btn {
-    background-color: #6c8fff;
-    color: #181a25;
-  }
-  .edit-form button.save-btn:hover {
-    background-color: #3851a7;
-  }
-  .edit-form button.cancel-btn {
-    background-color: #eb7070;
-    color: #fff;
-  }
-  .edit-form button.cancel-btn:hover {
-    background-color: #ff4d4d;
-  }
+  .edit-form { margin-top: 10px; }
+  .edit-form input[type="text"], .edit-form textarea, .edit-form select, .edit-form input[type="date"] { background: #181a25; border: 1px solid #394fa9; color: #e5e6f0; margin-bottom: 8px; }
+  .edit-form textarea { resize: vertical; }
+  .edit-form-buttons { display: flex; gap: 10px; }
+  .edit-form button { padding: 6px 16px; border-radius: 6px; cursor: pointer; border: none; font-weight: 600; font-size: 14px; }
+  .edit-form button.save-btn { background-color: #6c8fff; color: #181a25; }
+  .edit-form button.save-btn:hover { background-color: #3851a7; }
+  .edit-form button.cancel-btn { background-color: #eb7070; color: #fff; }
+  .edit-form button.cancel-btn:hover { background-color: #ff4d4d; }
 
   /* Subtasks */
-  .subtasks {
-    margin-left: 36px;
-    margin-top: 10px;
-    border-left: 2px solid #394fa9;
-    padding-left: 12px;
-    user-select: none;
-  }
-  .subtask {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 8px;
-    gap: 12px;
-  }
-  .subtask label {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    cursor: pointer;
-    flex-grow: 1;
-    min-width: 0;
-  }
-  .subtask span {
-    flex-shrink: 1;
-    user-select: text;
-  }
-  .subtask span.completed {
-    text-decoration: line-through;
-    opacity: 0.6;
-  }
-  .subtask-delete-btn {
-    font-size: 20px;
-    width: 26px;
-    height: 26px;
-    flex-shrink: 0;
-    cursor: pointer;
-    background: none;
-    border: none;
-    color: #ff4d4d;
-    border-radius: 6px;
-    transition: color 0.25s ease;
-  }
+  .subtasks { margin-left: 36px; margin-top: 10px; border-left: 2px solid #394fa9; padding-left: 12px; user-select: none; }
+  .subtask { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; gap: 12px; }
+  .subtask label { display: flex; align-items: center; gap: 8px; cursor: pointer; flex-grow: 1; min-width: 0; }
+  .subtask span { flex-shrink: 1; user-select: text; }
+  .subtask span.completed { text-decoration: line-through; opacity: 0.6; }
+  .subtask-delete-btn { font-size: 20px; width: 26px; height: 26px; flex-shrink: 0; cursor: pointer; background: none; border: none; color: #ff4d4d; border-radius: 6px; transition: color 0.25s ease; }
   .subtask-delete-btn:hover { color: #ff1a1a; }
-  .add-subtask-container {
-    margin-top: 12px;
-    display: flex;
-    gap: 10px;
-  }
-  .add-subtask-container input[type="text"] {
-    flex-grow: 1;
-    border-radius: 8px;
-    padding: 8px 12px;
-    font-size: 14px;
-    border: 1px solid #434a63;
-    background: #22263a;
-    color: #e5e6f0;
-    transition: background 0.3s ease;
-  }
-  .add-subtask-container input[type="text"]:focus {
-    outline: none;
-    background: #283059;
-    border-color: #6c8fff;
-  }
-  .add-subtask-container button {
-    background-color: #6c8fff;
-    color: #181a25;
-    border: none;
-    border-radius: 8px;
-    padding: 8px 16px;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-    font-weight: 600;
-    font-size: 14px;
-  }
-  .add-subtask-container button:hover {
-    background-color: #3851a7;
-    color: #fff;
-  }
+  .add-subtask-container { margin-top: 12px; display: flex; gap: 10px; }
+  .add-subtask-container input[type="text"] { flex-grow: 1; border-radius: 8px; padding: 8px 12px; font-size: 14px; border: 1px solid #434a63; background: #22263a; color: #e5e6f0; transition: background 0.3s ease; }
+  .add-subtask-container input[type="text"]:focus { outline: none; background: #283059; border-color: #6c8fff; }
+  .add-subtask-container button { background-color: #6c8fff; color: #181a25; border: none; border-radius: 8px; padding: 8px 16px; cursor: pointer; transition: background-color 0.3s ease; font-weight: 600; font-size: 14px; }
+  .add-subtask-container button:hover { background-color: #3851a7; color: #fff; }
 
   /* Others */
   .category-workout { color: #ff8792; }
@@ -354,73 +108,57 @@
   .category-finance { color: #f6ca97; }
 
   /* Progress dashboard */
-  .dash-container {
-    max-width: 700px;
-    margin: 0 auto 30px;
-    background: #23263a;
-    border-radius: 14px;
-    padding: 24px;
-    border: 2px solid #394fa9;
-    box-shadow: 0 0 15px #6c8fffaa;
-  }
-  .dashboard-items {
-    display: flex;
-    gap: 24px;
-    justify-content: space-around;
-    flex-wrap: wrap;
-  }
-  .dashboard-item {
-    min-width: 130px;
-    color: #b5bde6;
-    text-align: center;
-    user-select: none;
-  }
-  .dashboard-item div:first-child {
-    font-weight: bold;
-    font-size: 22px;
-    margin-bottom: 8px;
-  }
-  .progress-bar {
-    width: 100%;
-    height: 16px;
-    border-radius: 12px;
-    background: #2a3047;
-    margin-top: 6px;
-    overflow: hidden;
-    box-shadow: inset 0 0 6px rgb(150 160 250 / 0.6);
-  }
-  .progress-fill {
-    height: 100%;
-    background-color: #6c8fff;
-    width: 0;
-    border-radius: 12px 0 0 12px;
-    transition: width 0.3s ease;
-  }
-  .filter-indicator {
-    text-align: center;
-    color: #aab7db;
-    font-style: italic;
-    margin-bottom: 15px;
-    font-size: 14px;
-    user-select: none;
-  }
+  .dash-container { max-width: 700px; margin: 0 auto 30px; background: #23263a; border-radius: 14px; padding: 24px; border: 2px solid #394fa9; box-shadow: 0 0 15px #6c8fffaa; }
+  .dashboard-items { display: flex; gap: 24px; justify-content: space-around; flex-wrap: wrap; }
+  .dashboard-item { min-width: 130px; color: #b5bde6; text-align: center; user-select: none; }
+  .dashboard-item div:first-child { font-weight: bold; font-size: 22px; margin-bottom: 8px; }
+  .progress-bar { width: 100%; height: 16px; border-radius: 12px; background: #2a3047; margin-top: 6px; overflow: hidden; box-shadow: inset 0 0 6px rgb(150 160 250 / 0.6); }
+  .progress-fill { height: 100%; background-color: #6c8fff; width: 0; border-radius: 12px 0 0 12px; transition: width 0.3s ease; }
+  .filter-indicator { text-align: center; color: #aab7db; font-style: italic; margin-bottom: 15px; font-size: 14px; user-select: none; }
 </style>
 </head>
 <body>
+  <div id="syncStatus" class="sync-status offline">📱 Local</div>
+
+  <!-- Gist Configuration Modal -->
+  <div id="configModal" class="config-modal">
+    <div class="config-content">
+      <span class="close-config">&times;</span>
+      <div class="config-instructions">
+        <p><strong>To enable cloud sync across devices:</strong></p>
+        <ol>
+          <li>Go to GitHub > Settings > Developer settings > Personal Access Tokens</li>
+          <li>Generate a token with "gist" scope (copy it!)</li>
+          <li>Paste the token below. If syncing existing data, paste Gist ID (leave blank to auto-create).</li>
+        </ol>
+      </div>
+      <div class="config-section">
+        <h3>GitHub Token</h3>
+        <input type="text" id="githubTokenInput" placeholder="Paste your GitHub Personal Access Token here" />
+        <h3>Gist ID</h3>
+        <input type="text" id="gistIDInput" placeholder="Paste your Gist ID here (optional)" />
+        <button onclick="saveGistConfig()">Save Configuration</button>
+        <button class="danger" onclick="clearGistConfig()">Clear Configuration</button>
+      </div>
+      <div class="config-section">
+        <button onclick="testGistConnection()">Test Connection</button>
+        <button onclick="forceSyncFromGist()">Sync from Cloud</button>
+        <button onclick="clearLocalData()">Clear Local Data</button>
+      </div>
+    </div>
+  </div>
+
   <aside id="sidebar" role="complementary" aria-label="Task Filters">
-    <h2>Filters</h2>
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+      <h2>Filters</h2>
+      <button onclick="openConfigModal()" style="background: #6c8fff; color: #181a25; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size: 12px;">☁️ Sync</button>
+    </div>
     <h3>Date Filters</h3>
-    <div class="input-group">
-      <label><input type="checkbox" id="filterAllDates" checked /> Show All Dates</label>
-    </div>
-    <div class="input-group">
-      <input type="date" id="filterDate" aria-label="Filter tasks by specific date" disabled />
-    </div>
+    <div class="input-group"><label><input type="checkbox" id="filterAllDates" checked /> Show All Dates</label></div>
+    <div class="input-group"><input type="date" id="filterDate" aria-label="Filter tasks by specific date" disabled /></div>
     <div class="input-group">
       <div class="date-filters">
-        <select id="filterYear" aria-label="Filter by year" disabled>
-          <option value="">All Years</option>
-        </select>
+        <select id="filterYear" aria-label="Filter by year" disabled><option value="">All Years</option></select>
         <select id="filterMonth" aria-label="Filter by month" disabled>
           <option value="">All Months</option>
           <option value="0">January</option>
@@ -465,7 +203,6 @@
 
   <main id="mainContent" role="main">
     <h1>TaskMe Todo App</h1>
-
     <form id="addTaskForm" aria-label="Add a new task" onsubmit="event.preventDefault(); addTask();">
       <input type="text" id="taskTitle" placeholder="Task Title" autocomplete="off" required aria-required="true" aria-label="Task Title" />
       <textarea id="taskDescription" placeholder="Optional Description" rows="2" aria-label="Task Description"></textarea>
@@ -478,9 +215,7 @@
       <input type="date" id="taskDate" required aria-required="true" aria-label="Task Due Date" />
       <button type="submit">Add Task</button>
     </form>
-
     <div id="tasksGrouped" aria-live="polite" aria-relevant="additions removals"></div>
-
     <section class="dash-container" aria-label="Progress Dashboard">
       <h2>Progress Dashboard</h2>
       <div class="filter-indicator" id="filterIndicator" aria-live="polite"></div>
@@ -489,59 +224,177 @@
   </main>
 
 <script>
+  // Core variables and helpers (same as your current code)
   const categories = {
     workout: { name: "Workout", colorClass: "category-workout" },
     personal: { name: "Personal", colorClass: "category-personal" },
     professional: { name: "Professional", colorClass: "category-professional" },
     finance: { name: "Finance", colorClass: "category-finance" },
   };
-
-  let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
-  let currentFilter = { 
-    year: null, 
-    month: null, 
-    day: null,
-    specificDate: null
-  };
-
+  let tasks = [];
+  let currentFilter = { year: null, month: null, day: null, specificDate: null };
   let currentEditTaskId = null;
   let currentMoveTaskId = null;
 
-  function saveTasks() {
-    localStorage.setItem("tasks", JSON.stringify(tasks));
+  // GitHub Gist variables
+  let githubToken = localStorage.getItem('githubToken') || "";
+  let gistID = localStorage.getItem('gistID') || "";
+
+  // Status logic
+  function updateSyncStatus(status) {
+    const el = document.getElementById("syncStatus");
+    el.className = `sync-status ${status}`;
+    switch (status) {
+      case "synced": el.textContent = "☁️ Synced"; break;
+      case "syncing": el.textContent = "🔄 Syncing..."; break;
+      default: el.textContent = "📱 Local";
+    }
   }
 
+  function openConfigModal() {
+    document.getElementById("configModal").style.display = "block";
+    document.getElementById("githubTokenInput").value = githubToken;
+    document.getElementById("gistIDInput").value = gistID;
+  }
+  function closeConfigModal() { document.getElementById("configModal").style.display = "none"; }
+  document.querySelector('.close-config').onclick = closeConfigModal;
+  window.onclick = function(e) { if (e.target === document.getElementById("configModal")) { closeConfigModal(); } };
+
+  function saveGistConfig() {
+    githubToken = document.getElementById("githubTokenInput").value.trim();
+    gistID = document.getElementById("gistIDInput").value.trim();
+    localStorage.setItem('githubToken', githubToken);
+    localStorage.setItem('gistID', gistID);
+    alert("Configuration saved! Reload to connect to cloud.");
+    location.reload();
+  }
+  function clearGistConfig() {
+    localStorage.removeItem('githubToken');
+    localStorage.removeItem('gistID');
+    githubToken = ""; gistID = "";
+    updateSyncStatus('offline');
+    alert("GitHub cloud sync configuration cleared!");
+  }
+
+  function clearLocalData() {
+    if (confirm("Clear all local task data?")) {
+      tasks = [];
+      localStorage.removeItem("tasks");
+      renderAll();
+      updateSyncStatus("offline");
+      if (githubToken && gistID) syncToGist();
+    }
+  }
+
+  async function testGistConnection() {
+    if (!githubToken) { alert("Enter a GitHub token first."); return; }
+    updateSyncStatus("syncing");
+    try {
+      const resp = await fetch("https://api.github.com/user", {
+        headers: { Authorization: `token ${githubToken}` }
+      });
+      if (resp.ok) {
+        const user = await resp.json();
+        alert(`✅ Connected as ${user.login}`);
+        updateSyncStatus('synced');
+      } else throw new Error('Invalid token');
+    } catch (e) { alert('❌ Connection failed: ' + e.message); updateSyncStatus('offline'); }
+  }
+
+  async function createGistIfNeeded() {
+    if (!githubToken) return false;
+    if (gistID) return true;
+    updateSyncStatus("syncing");
+    try {
+      const resp = await fetch("https://api.github.com/gists", {
+        method: "POST",
+        headers: { Authorization: `token ${githubToken}`, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          description: "TaskMe App Data",
+          public: false,
+          files: { "tasks.json": { content: JSON.stringify(tasks || []) } }
+        })
+      });
+      const gist = await resp.json();
+      if (gist.id) {
+        gistID = gist.id;
+        localStorage.setItem('gistID', gistID);
+        updateSyncStatus("synced");
+        alert("Created new gist for cloud sync.");
+        return true;
+      } else throw new Error(gist.message || "Gist creation failed");
+    } catch (e) { updateSyncStatus("offline"); alert("Failed to create gist: " + e.message); return false; }
+  }
+
+  async function syncToGist() {
+    if (!githubToken) return;
+    if (!gistID) { await createGistIfNeeded(); }
+    if (!gistID) return;
+    updateSyncStatus("syncing");
+    try {
+      await fetch(`https://api.github.com/gists/${gistID}`, {
+        method: "PATCH",
+        headers: { Authorization: `token ${githubToken}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ files: { "tasks.json": { content: JSON.stringify(tasks || []) } } })
+      });
+      updateSyncStatus("synced");
+    } catch (e) { updateSyncStatus("offline"); }
+  }
+
+  async function syncFromGist() {
+    if (!githubToken || !gistID) return;
+    updateSyncStatus("syncing");
+    try {
+      const resp = await fetch(`https://api.github.com/gists/${gistID}`, {
+        headers: { Authorization: `token ${githubToken}` }
+      });
+      const gist = await resp.json();
+      if (gist.files && gist.files["tasks.json"]) {
+        tasks = JSON.parse(gist.files["tasks.json"].content);
+        localStorage.setItem("tasks", JSON.stringify(tasks));
+        renderAll();
+        updateSyncStatus("synced");
+      }
+    } catch (e) { updateSyncStatus("offline"); }
+  }
+
+  function forceSyncFromGist() {
+    if (!githubToken || !gistID) { alert("Configure Gist sync in ☁️ Sync modal first."); return; }
+    if (confirm("This will OVERWRITE local data from cloud. Continue?")) syncFromGist();
+  }
+
+  function saveTasks() {
+    localStorage.setItem("tasks", JSON.stringify(tasks));
+    syncToGist();
+  }
+
+  function initializeGistAndLoad() {
+    tasks = JSON.parse(localStorage.getItem("tasks")) || [];
+    if (githubToken) {
+      // If no local data, always try to load from cloud
+      if (!tasks.length && gistID) { syncFromGist(); }
+      // Otherwise, always attempt cloud sync (to ensure updates are shared)
+      else { syncToGist(); }
+      updateSyncStatus("synced");
+      // Optionally, you can auto-sync from cloud every 30s
+      if (gistID) setInterval(syncFromGist, 30000);
+    } else { updateSyncStatus("offline"); }
+  }
+
+  // --- Everything else below remains unchanged! ---
   function initializeDateFilters() {
     const yearSelect = document.getElementById("filterYear");
     const daySelect = document.getElementById("filterDay");
-    
     yearSelect.innerHTML = '<option value="">All Years</option>';
     daySelect.innerHTML = '<option value="">All Days</option>';
-    
     const years = new Set();
     const currentYear = new Date().getFullYear();
-    for (let i = currentYear - 5; i <= currentYear + 5; i++) {
-      years.add(i);
-    }
-    
-    tasks.forEach(task => {
-      const taskDate = new Date(task.dueDate);
-      years.add(taskDate.getFullYear());
-    });
-    
+    for (let i = currentYear - 5; i <= currentYear + 5; i++) years.add(i);
+    tasks.forEach(task => { const taskDate = new Date(task.dueDate); years.add(taskDate.getFullYear()); });
     Array.from(years).sort((a, b) => b - a).forEach(year => {
-      const option = document.createElement("option");
-      option.value = year;
-      option.textContent = year;
-      yearSelect.appendChild(option);
+      const option = document.createElement("option"); option.value = year; option.textContent = year; yearSelect.appendChild(option);
     });
-    
-    for (let i = 1; i <= 31; i++) {
-      const option = document.createElement("option");
-      option.value = i;
-      option.textContent = i;
-      daySelect.appendChild(option);
-    }
+    for (let i = 1; i <= 31; i++) { const option = document.createElement("option"); option.value = i; option.textContent = i; daySelect.appendChild(option); }
   }
 
   function addTask() {
@@ -549,37 +402,15 @@
     const descriptionInput = document.getElementById("taskDescription");
     const categoryInput = document.getElementById("taskCategory");
     const dateInput = document.getElementById("taskDate");
-
     const title = titleInput.value.trim();
     const description = descriptionInput.value.trim();
     const category = categoryInput.value;
     const dueDate = dateInput.value;
-
-    if (!title) {
-      alert("Please enter task title.");
-      return;
-    }
-    if (!dueDate) {
-      alert("Please select a due date.");
-      return;
-    }
-
-    tasks.push({
-      id: Date.now().toString(),
-      title,
-      description,
-      category,
-      dueDate,
-      status: "pending",
-      subtasks: [],
-    });
-
+    if (!title) { alert("Please enter task title."); return; }
+    if (!dueDate) { alert("Please select a due date."); return; }
+    tasks.push({ id: Date.now().toString(), title, description, category, dueDate, status: "pending", subtasks: [] });
     saveTasks();
-
-    titleInput.value = "";
-    descriptionInput.value = "";
-    dateInput.value = new Date().toISOString().slice(0, 10);
-
+    titleInput.value = ""; descriptionInput.value = ""; dateInput.value = new Date().toISOString().slice(0, 10);
     initializeDateFilters();
     renderAll();
   }
@@ -588,19 +419,15 @@
     const categoryFilter = document.getElementById("filterCategory").value;
     const statusFilter = document.getElementById("filterStatus").value;
     const showAllDates = document.getElementById("filterAllDates").checked;
-
     return tasks.filter(t => {
       if (categoryFilter && t.category !== categoryFilter) return false;
       if (statusFilter && t.status !== statusFilter) return false;
       if (showAllDates) return true;
-
       const taskDate = new Date(t.dueDate + 'T00:00:00Z');
-
       if (currentFilter.specificDate && t.dueDate !== currentFilter.specificDate) return false;
       if (currentFilter.year && taskDate.getUTCFullYear() !== parseInt(currentFilter.year)) return false;
       if (currentFilter.month !== null && currentFilter.month !== "" && taskDate.getUTCMonth() !== parseInt(currentFilter.month)) return false;
       if (currentFilter.day && taskDate.getUTCDate() !== parseInt(currentFilter.day)) return false;
-
       return true;
     });
   }
@@ -609,39 +436,27 @@
     return text.replace(/[&<>"']/g, m => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[m]);
   }
 
-  // Rendering tasks grouped by category with edit forms, move forms and subtasks
   function renderTasks() {
     const container = document.getElementById("tasksGrouped");
     container.innerHTML = "";
     const filtered = getFilteredTasks();
-
     if (filtered.length === 0) {
       container.innerHTML = "<p style='text-align:center;color:#7b84a7;'>No tasks match the filters.</p>";
       return;
     }
-
     const groupedTasks = {};
-    filtered.forEach(task => {
-      if (!groupedTasks[task.category]) {
-        groupedTasks[task.category] = [];
-      }
-      groupedTasks[task.category].push(task);
-    });
-
+    filtered.forEach(task => { if (!groupedTasks[task.category]) groupedTasks[task.category] = []; groupedTasks[task.category].push(task); });
     for (const categoryKey of Object.keys(categories)) {
       const tasksInCategory = groupedTasks[categoryKey];
       if (!tasksInCategory || tasksInCategory.length === 0) continue;
-
       const categoryHeader = document.createElement("h2");
       categoryHeader.textContent = categories[categoryKey].name;
       categoryHeader.style.color = getCategoryColor(categoryKey);
       categoryHeader.style.marginTop = "24px";
       container.appendChild(categoryHeader);
-
       tasksInCategory.forEach(task => {
         const taskDiv = document.createElement("div");
         taskDiv.className = "task-card";
-
         if (currentEditTaskId === task.id) {
           taskDiv.innerHTML = getEditTaskFormHTML(task);
         } else if (currentMoveTaskId === task.id) {
@@ -661,7 +476,6 @@
               </div>
             </div>
             <small style="font-style: italic; color:#8a8fbc;">Due: ${task.dueDate} | ${escapeHtml(task.description || 'No description')}</small>
-
             <div class="subtasks" id="subtasks-${task.id}"></div>
             <div class="add-subtask-container">
               <input type="text" id="newSubtaskInput-${task.id}" placeholder="Add subtask" aria-label="Add subtask for ${escapeHtml(task.title)}" />
@@ -670,9 +484,7 @@
           `;
         }
         container.appendChild(taskDiv);
-
         if (currentEditTaskId !== task.id && currentMoveTaskId !== task.id) {
-          // Render subtasks
           const subtasksContainer = document.getElementById(`subtasks-${task.id}`);
           task.subtasks.forEach(sub => {
             const subDiv = document.createElement("div");
@@ -692,33 +504,29 @@
   }
 
   function getEditTaskFormHTML(task) {
-    return `
-      <form class="edit-form" onsubmit="event.preventDefault(); saveEditedTask('${task.id}')">
-        <input type="text" id="editTitle-${task.id}" value="${escapeHtml(task.title)}" required placeholder="Task Title" aria-label="Edit Task Title" />
-        <textarea id="editDescription-${task.id}" placeholder="Task Description" aria-label="Edit Task Description">${escapeHtml(task.description || '')}</textarea>
-        <select id="editCategory-${task.id}" aria-label="Edit Task Category" required>
-          <option value="workout" ${task.category === 'workout' ? 'selected' : ''}>Workout</option>
-          <option value="personal" ${task.category === 'personal' ? 'selected' : ''}>Personal</option>
-          <option value="professional" ${task.category === 'professional' ? 'selected' : ''}>Professional</option>
-          <option value="finance" ${task.category === 'finance' ? 'selected' : ''}>Finance</option>
-        </select>
-        <input type="date" id="editDate-${task.id}" value="${task.dueDate}" required aria-label="Edit Task Due Date" />
-        <div class="edit-form-buttons">
-          <button class="save-btn" type="submit">Save</button>
-          <button class="cancel-btn" type="button" onclick="cancelEdit()">Cancel</button>
-        </div>
-      </form>
-    `;
+    return `<form class="edit-form" onsubmit="event.preventDefault(); saveEditedTask('${task.id}')">
+      <input type="text" id="editTitle-${task.id}" value="${escapeHtml(task.title)}" required placeholder="Task Title" aria-label="Edit Task Title" />
+      <textarea id="editDescription-${task.id}" placeholder="Task Description" aria-label="Edit Task Description">${escapeHtml(task.description || '')}</textarea>
+      <select id="editCategory-${task.id}" aria-label="Edit Task Category" required>
+        <option value="workout" ${task.category === 'workout' ? 'selected' : ''}>Workout</option>
+        <option value="personal" ${task.category === 'personal' ? 'selected' : ''}>Personal</option>
+        <option value="professional" ${task.category === 'professional' ? 'selected' : ''}>Professional</option>
+        <option value="finance" ${task.category === 'finance' ? 'selected' : ''}>Finance</option>
+      </select>
+      <input type="date" id="editDate-${task.id}" value="${task.dueDate}" required aria-label="Edit Task Due Date" />
+      <div class="edit-form-buttons">
+        <button class="save-btn" type="submit">Save</button>
+        <button class="cancel-btn" type="button" onclick="cancelEdit()">Cancel</button>
+      </div>
+    </form>`;
   }
 
   function getMoveTaskFormHTML(task) {
-    return `
-      <div class="move-task-container" role="form" aria-label="Move task date">
-        <input type="date" id="moveDate-${task.id}" value="${task.dueDate}" aria-label="Select new due date" />
-        <button onclick="saveMovedTask('${task.id}')" aria-label="Save moved task date">Save</button>
-        <button class="cancel-btn" onclick="cancelMove()" aria-label="Cancel move">Cancel</button>
-      </div>
-    `;
+    return `<div class="move-task-container" role="form" aria-label="Move task date">
+      <input type="date" id="moveDate-${task.id}" value="${task.dueDate}" aria-label="Select new due date" />
+      <button onclick="saveMovedTask('${task.id}')" aria-label="Save moved task date">Save</button>
+      <button class="cancel-btn" onclick="cancelMove()" aria-label="Cancel move">Cancel</button>
+    </div>`;
   }
 
   function saveEditedTask(taskId) {
@@ -726,81 +534,31 @@
     const description = document.getElementById(`editDescription-${taskId}`).value.trim();
     const category = document.getElementById(`editCategory-${taskId}`).value;
     const dueDate = document.getElementById(`editDate-${taskId}`).value;
-
-    if (!title) {
-      alert("Please enter a title.");
-      return;
-    }
-    if (!dueDate) {
-      alert("Please select a due date.");
-      return;
-    }
-
-    tasks = tasks.map(t => {
-      if (t.id === taskId) {
-        return {...t, title, description, category, dueDate};
-      }
-      return t;
-    });
-
+    if (!title) { alert("Please enter a title."); return; }
+    if (!dueDate) { alert("Please select a due date."); return; }
+    tasks = tasks.map(t => { if (t.id === taskId) { return {...t, title, description, category, dueDate}; } return t; });
     saveTasks();
-    currentEditTaskId = null;
-    currentMoveTaskId = null;
-    initializeDateFilters();
-    renderAll();
+    currentEditTaskId = null; currentMoveTaskId = null; initializeDateFilters(); renderAll();
   }
 
-  function cancelEdit() {
-    currentEditTaskId = null;
-    renderAll();
-  }
-
-  function startEditTask(taskId) {
-    currentEditTaskId = taskId;
-    currentMoveTaskId = null;
-    renderAll();
-  }
-
-  // Move task logic
-  function startMoveTask(taskId) {
-    currentMoveTaskId = taskId;
-    currentEditTaskId = null;
-    renderAll();
-  }
-
-  function cancelMove() {
-    currentMoveTaskId = null;
-    renderAll();
-  }
-
+  function cancelEdit() { currentEditTaskId = null; renderAll(); }
+  function startEditTask(taskId) { currentEditTaskId = taskId; currentMoveTaskId = null; renderAll(); }
+  function startMoveTask(taskId) { currentMoveTaskId = taskId; currentEditTaskId = null; renderAll(); }
+  function cancelMove() { currentMoveTaskId = null; renderAll(); }
   function saveMovedTask(taskId) {
     const input = document.getElementById(`moveDate-${taskId}`);
     const newDate = input.value;
-    if (!newDate) {
-      alert("Please select a date.");
-      return;
-    }
-    tasks = tasks.map(t => {
-      if (t.id === taskId) {
-        return {...t, dueDate: newDate};
-      }
-      return t;
-    });
+    if (!newDate) { alert("Please select a date."); return; }
+    tasks = tasks.map(t => { if (t.id === taskId) { return {...t, dueDate: newDate}; } return t; });
     saveTasks();
-    currentMoveTaskId = null;
-    initializeDateFilters();
-    renderAll();
+    currentMoveTaskId = null; initializeDateFilters(); renderAll();
   }
 
-  // Status toggles
   function toggleStatus(taskId) {
     tasks = tasks.map(t => {
       if (t.id === taskId) {
         const newStatus = t.status === "pending" ? "completed" : "pending";
-        // If task has subtasks, toggling manually marks all subtasks same status
-        if (t.subtasks.length > 0) {
-          t.subtasks = t.subtasks.map(s => ({...s, completed: newStatus === "completed"}));
-        }
+        if (t.subtasks.length > 0) t.subtasks = t.subtasks.map(s => ({...s, completed: newStatus === "completed"}));
         t.status = newStatus;
       }
       return t;
@@ -813,28 +571,14 @@
     const input = document.getElementById(`newSubtaskInput-${taskId}`);
     const title = input.value.trim();
     if (!title) return;
-
-    tasks = tasks.map(t => {
-      if (t.id === taskId) {
-        t.subtasks.push({id: Date.now().toString(), title, completed: false});
-        t.status = "pending"; // reset main task to pending if new subtask added
-      }
-      return t;
-    });
-
-    saveTasks();
-    input.value = "";
-    renderAll();
+    tasks = tasks.map(t => { if (t.id === taskId) { t.subtasks.push({id: Date.now().toString(), title, completed: false}); t.status = "pending"; } return t; });
+    saveTasks(); input.value = ""; renderAll();
   }
 
   function toggleSubtaskStatus(taskId, subtaskId) {
     tasks = tasks.map(t => {
       if (t.id === taskId) {
-        t.subtasks = t.subtasks.map(s => {
-          if (s.id === subtaskId) s.completed = !s.completed;
-          return s;
-        });
-        // Update main task status: complete only if all subtasks completed
+        t.subtasks = t.subtasks.map(s => { if (s.id === subtaskId) s.completed = !s.completed; return s; });
         const allCompleted = t.subtasks.length > 0 && t.subtasks.every(s => s.completed);
         t.status = allCompleted ? "completed" : "pending";
       }
@@ -846,17 +590,14 @@
 
   function deleteSubtask(taskId, subtaskId) {
     if (!confirm("Delete this subtask?")) return;
-
     tasks = tasks.map(t => {
       if (t.id === taskId) {
         t.subtasks = t.subtasks.filter(s => s.id !== subtaskId);
-        // Update main task status accordingly
         const allCompleted = t.subtasks.length > 0 && t.subtasks.every(s => s.completed);
         t.status = allCompleted ? "completed" : "pending";
       }
       return t;
     });
-
     saveTasks();
     renderAll();
   }
@@ -870,15 +611,8 @@
     renderAll();
   }
 
-  // Filters logic
   function clearFilters() {
-    currentFilter = { 
-      year: null, 
-      month: null, 
-      day: null,
-      specificDate: null
-    };
-
+    currentFilter = { year: null, month: null, day: null, specificDate: null };
     document.getElementById("filterDate").value = '';
     document.getElementById("filterAllDates").checked = true;
     document.getElementById("filterDate").disabled = true;
@@ -902,7 +636,6 @@
     const yearSelect = document.getElementById("filterYear");
     const monthSelect = document.getElementById("filterMonth");
     const daySelect = document.getElementById("filterDay");
-
     if (checked) {
       currentFilter = { year: null, month: null, day: null, specificDate: null };
       dateInput.disabled = true;
@@ -970,24 +703,15 @@
   document.getElementById("taskDate").value = new Date().toISOString().slice(0, 10);
 
   function getFilterPeriodText() {
-    if (currentFilter.specificDate) {
-      return `Daily Progress - ${currentFilter.specificDate}`;
-    }
-
-    let filterText = "Filtered Progress";
-    let parts = [];
-
+    if (currentFilter.specificDate) { return `Daily Progress - ${currentFilter.specificDate}`; }
+    let filterText = "Filtered Progress", parts = [];
     if (currentFilter.year) parts.push(`Year: ${currentFilter.year}`);
     if (currentFilter.month !== null && currentFilter.month !== "") {
       const monthName = new Date(2000, parseInt(currentFilter.month)).toLocaleString('default', {month:'long'});
       parts.push(`Month: ${monthName}`);
     }
     if (currentFilter.day) parts.push(`Day: ${currentFilter.day}`);
-
-    if (parts.length > 0) {
-      return `${filterText} - ${parts.join(', ')}`;
-    }
-
+    if (parts.length > 0) return `${filterText} - ${parts.join(', ')}`;
     return "Overall Progress - All Tasks";
   }
 
@@ -996,19 +720,15 @@
     const indicator = document.getElementById("filterIndicator");
     container.innerHTML = "";
     indicator.textContent = getFilterPeriodText();
-
     const filtered = getFilteredTasks();
-
     for (const cat in categories) {
       const catTasks = filtered.filter(t => t.category === cat);
       const completed = catTasks.filter(t => t.status === "completed").length;
       const total = catTasks.length;
       const percent = total ? Math.round(completed / total * 100) : 0;
-
       const div = document.createElement("div");
       div.className = "dashboard-item";
-      div.innerHTML = `
-        <div style="color:${getCategoryColor(cat)}">${percent}%</div>
+      div.innerHTML = `<div style="color:${getCategoryColor(cat)}">${percent}%</div>
         <div>${categories[cat].name} Completed</div>
         <div style="font-size:12px; color:#9ca3af;">(${completed}/${total} tasks)</div>
         <div class="progress-bar" aria-label="${percent}% complete">
@@ -1019,11 +739,9 @@
     const overallCompleted = filtered.filter(t => t.status === "completed").length;
     const overallTotal = filtered.length;
     const overallPercent = overallTotal ? Math.round(overallCompleted / overallTotal * 100) : 0;
-
     const overallDiv = document.createElement("div");
     overallDiv.className = "dashboard-item";
-    overallDiv.innerHTML = `
-      <div style="color:#6c8fff; font-size: 26px; font-weight: bold;">${overallPercent}%</div>
+    overallDiv.innerHTML = `<div style="color:#6c8fff; font-size: 26px; font-weight: bold;">${overallPercent}%</div>
       <div>Overall Completed</div>
       <div style="font-size:12px; color:#aab7db;">(${overallCompleted}/${overallTotal} tasks)</div>
       <div class="progress-bar" aria-label="Overall progress ${overallPercent} percent complete">
@@ -1031,25 +749,15 @@
       </div>`;
     container.appendChild(overallDiv);
   }
-
   function getCategoryColor(cat) {
-    switch (cat) {
-      case "workout": return "#ff8792";
-      case "personal": return "#fdfd65";
-      case "professional": return "#89ffd5";
-      case "finance": return "#f6ca97";
-      default: return "#ccc";
-    }
+    switch (cat) { case "workout": return "#ff8792"; case "personal": return "#fdfd65"; case "professional": return "#89ffd5"; case "finance": return "#f6ca97"; default: return "#ccc"; }
   }
+  function renderAll() { renderTasks(); renderDashboard(); }
 
-  function renderAll() {
-    renderTasks();
-    renderDashboard();
-  }
-
+  // --- Initialize ---
+  initializeGistAndLoad();
   initializeDateFilters();
   renderAll();
 </script>
-
 </body>
 </html>
