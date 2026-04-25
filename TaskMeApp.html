@@ -5,6 +5,45 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>TaskMe - Todo App with GitHub Gist Sync</title>
 <style>
+  /* Mobile Responsiveness Updates */
+@media (max-width: 768px) {
+  body {
+    flex-direction: column; /* Stack sidebar and main content vertically */ 
+    overflow-y: auto;       /* Allow the whole page to scroll */ 
+  }
+
+  #sidebar {
+    width: 100%;            /* Sidebar takes full width */ [cite: 8]
+    height: auto;           /* Shrink height to fit content */ [cite: 8]
+    border-right: none;     /* Remove vertical border */ [cite: 8]
+    border-bottom: 2px solid #3e5c98;
+    padding: 15px;
+  }
+
+  #mainContent {
+    padding: 15px;
+    overflow-y: visible;    /* Prevent nested scrollbar issues */ [cite: 16]
+  }
+
+  #addTaskForm {
+    flex-direction: column; /* Stack input fields vertically */ [cite: 18]
+    align-items: stretch;
+  }
+
+  #addTaskForm button {
+    width: 100%;            /* Full-width button for easier thumb-tapping */ [cite: 21]
+  }
+
+  .task-header {
+    flex-wrap: wrap;        /* Wrap title and buttons on very small screens */ [cite: 24]
+    gap: 10px;
+  }
+
+  .dashboard-item {
+    min-width: 45%;         /* Show two dashboard items per row instead of one */ [cite: 52]
+    flex-grow: 1;
+  }
+}
   /* Reset and base styles */
   * { box-sizing: border-box; }
   html, body { margin: 0; padding: 0; height: 100%; font-family: Arial, sans-serif; background: #1e2230; color: #e5e6f0; }
