@@ -125,6 +125,66 @@
   .progress-bar { width: 100%; height: 16px; border-radius: 12px; background: #2a3047; margin-top: 6px; overflow: hidden; box-shadow: inset 0 0 6px rgb(150 160 250 / 0.6); }
   .progress-fill { height: 100%; background-color: #6c8fff; width: 0; border-radius: 12px 0 0 12px; transition: width 0.3s ease; }
   .filter-indicator { text-align: center; color: #aab7db; font-style: italic; margin-bottom: 15px; font-size: 14px; user-select: none; }
+  
+  /* =========================================
+     Mobile Responsiveness Media Queries
+     ========================================= */
+  @media (max-width: 768px) {
+    /* Switch body from horizontal row to vertical column */
+    body { 
+      flex-direction: column; 
+      overflow-y: auto; 
+    }
+
+    /* Adapt the sidebar to take full width and stack */
+    #sidebar { 
+      width: 100%; 
+      height: auto; 
+      border-right: none; 
+      border-bottom: 2px solid #3e5c98; 
+      padding: 15px; 
+    }
+
+    /* Keep main content scrollable and pad appropriately */
+    #mainContent { 
+      padding: 15px; 
+      overflow-y: visible; 
+    }
+
+    /* Stack the Add Task form elements vertically */
+    #addTaskForm { 
+      flex-direction: column; 
+      align-items: stretch; 
+    }
+
+    #addTaskForm button { 
+      width: 100%; 
+    }
+
+    /* Wrap task headers so long titles don't break the layout */
+    .task-header { 
+      flex-wrap: wrap; 
+      gap: 10px; 
+    }
+
+    /* Improve touch targets for mobile accessibility */
+    .action-btn-inline { 
+      width: 44px; 
+      height: 44px; 
+    }
+
+    /* Dashboard grids */
+    .dashboard-item { 
+      min-width: 45%; 
+      flex-grow: 1; 
+    }
+
+    /* Adjust Sync Status placement so it doesn't overlap header */
+    .sync-status {
+      top: auto;
+      bottom: 10px;
+    }
+  }
 </style>
 </head>
 <body>
