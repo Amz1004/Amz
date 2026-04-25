@@ -5,45 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>TaskMe - Todo App with GitHub Gist Sync</title>
 <style>
-  /* Mobile Responsiveness Updates */
-@media (max-width: 768px) {
-  body {
-    flex-direction: column; /* Stack sidebar and main content vertically */ 
-    overflow-y: auto;       /* Allow the whole page to scroll */ 
-  }
-
-  #sidebar {
-    width: 100%;            /* Sidebar takes full width */ [cite: 8]
-    height: auto;           /* Shrink height to fit content */ [cite: 8]
-    border-right: none;     /* Remove vertical border */ [cite: 8]
-    border-bottom: 2px solid #3e5c98;
-    padding: 15px;
-  }
-
-  #mainContent {
-    padding: 15px;
-    overflow-y: visible;    /* Prevent nested scrollbar issues */ [cite: 16]
-  }
-
-  #addTaskForm {
-    flex-direction: column; /* Stack input fields vertically */ [cite: 18]
-    align-items: stretch;
-  }
-
-  #addTaskForm button {
-    width: 100%;            /* Full-width button for easier thumb-tapping */ [cite: 21]
-  }
-
-  .task-header {
-    flex-wrap: wrap;        /* Wrap title and buttons on very small screens */ [cite: 24]
-    gap: 10px;
-  }
-
-  .dashboard-item {
-    min-width: 45%;         /* Show two dashboard items per row instead of one */ [cite: 52]
-    flex-grow: 1;
-  }
-}
   /* Reset and base styles */
   * { box-sizing: border-box; }
   html, body { margin: 0; padding: 0; height: 100%; font-family: Arial, sans-serif; background: #1e2230; color: #e5e6f0; }
@@ -71,9 +32,19 @@
   .config-instructions code { background: #394fa9; padding: 2px 6px; border-radius: 4px; font-family: monospace; }
 
   /* Sidebar styles */
-  #sidebar { width: 320px; height: 100vh; background-color: #23263a; border-right: 2px solid #3e5c98; padding: 20px; overflow-y: auto; flex-shrink: 0; }
+  #sidebar { 
+    width: 320px; height: 100vh; background-color: #23263a; border-right: 2px solid #3e5c98; padding: 20px; overflow-y: auto; flex-shrink: 0; 
+    transition: width 0.3s ease, padding 0.3s ease, opacity 0.3s ease;
+    overflow-x: hidden;
+    position: relative;
+  }
+  #sidebar.collapsed { width: 0; padding: 0; border: none; opacity: 0; pointer-events: none; }
   #sidebar h2 { margin-top: 0; margin-bottom: 15px; color: #a6b7f2; }
   #sidebar h3 { margin-top: 20px; margin-bottom: 10px; color: #9ca6d8; font-size: 16px; }
+  
+  /* Toggle Button */
+  .sidebar-toggle { background: #6c8fff; color: #181a25; border: none; border-radius: 8px; padding: 10px; cursor: pointer; font-weight: bold; margin-bottom: 15px; display: inline-flex; align-items: center; gap: 8px; z-index: 1001; }
+
   .input-group { margin-bottom: 16px; }
   .date-filters { display: flex; gap: 8px; flex-wrap: wrap; }
   .date-filters select { flex: 1; min-width: 70px; }
@@ -88,7 +59,7 @@
   #filterDate:disabled, #filterYear:disabled, #filterMonth:disabled, #filterDay:disabled { background-color: #282c44; cursor: not-allowed; }
 
   /* Main content styles */
-  #mainContent { flex-grow: 1; overflow-y: auto; padding: 20px; background-color: #181a25; }
+  #mainContent { flex-grow: 1; overflow-y: auto; padding: 20px; background-color: #181a25; transition: padding 0.3s ease; }
   h1, h2 { color: #6c8fff; text-align: center; }
   #addTaskForm { max-width: 700px; margin: 0 auto 30px; display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
   #addTaskForm input[type="text"], #addTaskForm textarea, #addTaskForm select, #addTaskForm input[type="date"] {
@@ -159,7 +130,6 @@
 <body>
   <div id="syncStatus" class="sync-status offline">📱 Local</div>
 
-  <!-- Gist Configuration Modal -->
   <div id="configModal" class="config-modal">
     <div class="config-content">
       <span class="close-config">&times;</span>
@@ -241,6 +211,10 @@
   </aside>
 
   <main id="mainContent" role="main">
+    <button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle Filters">
+      ☰ Hide Filters
+    </button>
+    
     <h1>TaskMe Todo App</h1>
     <form id="addTaskForm" aria-label="Add a new task" onsubmit="event.preventDefault(); addTask();">
       <input type="text" id="taskTitle" placeholder="Task Title" autocomplete="off" required aria-required="true" aria-label="Task Title" />
@@ -263,7 +237,21 @@
   </main>
 
 <script>
-  // Core variables and helpers (same as your current code)
+  // Sidebar Toggle Logic
+  function toggleSidebar() {
+    const sidebar = document.getElementById("sidebar");
+    const toggleBtn = document.querySelector(".sidebar-toggle");
+    
+    sidebar.classList.toggle("collapsed");
+    
+    if (sidebar.classList.contains("collapsed")) {
+      toggleBtn.innerHTML = "☰ Show Filters";
+    } else {
+      toggleBtn.innerHTML = "☰ Hide Filters";
+    }
+  }
+
+  // Core variables and helpers
   const categories = {
     workout: { name: "Workout", colorClass: "category-workout" },
     personal: { name: "Personal", colorClass: "category-personal" },
@@ -410,17 +398,13 @@
   function initializeGistAndLoad() {
     tasks = JSON.parse(localStorage.getItem("tasks")) || [];
     if (githubToken) {
-      // If no local data, always try to load from cloud
       if (!tasks.length && gistID) { syncFromGist(); }
-      // Otherwise, always attempt cloud sync (to ensure updates are shared)
       else { syncToGist(); }
       updateSyncStatus("synced");
-      // Optionally, you can auto-sync from cloud every 30s
       if (gistID) setInterval(syncFromGist, 30000);
     } else { updateSyncStatus("offline"); }
   }
 
-  // --- Everything else below remains unchanged! ---
   function initializeDateFilters() {
     const yearSelect = document.getElementById("filterYear");
     const daySelect = document.getElementById("filterDay");
